@@ -23,6 +23,14 @@ Community-maintained Spring AI integrations for Azure Cosmos DB.
 ```xml
 <dependency>
     <groupId>com.azure.spring.ai</groupId>
+    <artifactId>spring-ai-autoconfigure-vector-store-azure-cosmos-db</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+</dependency>
+```
+
+```xml
+<dependency>
+    <groupId>com.azure.spring.ai</groupId>
     <artifactId>spring-ai-model-chat-memory-repository-cosmos-db</artifactId>
     <version>1.0.0-SNAPSHOT</version>
 </dependency>

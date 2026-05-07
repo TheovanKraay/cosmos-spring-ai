@@ -1,0 +1,3 @@
+/tmp/spring-ai-cosmos/spring-ai-azure-cosmos-db-store/src/test/java/com/azure/spring/ai/vectorstore/cosmosdb/CosmosDBVectorStoreEmulatorIT.java
+/tmp/spring-ai-cosmos/spring-ai-azure-cosmos-db-store/src/test/java/com/azure/spring/ai/vectorstore/cosmosdb/CosmosDBVectorStoreIT.java
+/tmp/spring-ai-cosmos/spring-ai-azure-cosmos-db-store/src/test/java/com/azure/spring/ai/vectorstore/cosmosdb/CosmosDBVectorStoreWithMetadataPartitionKeyIT.java

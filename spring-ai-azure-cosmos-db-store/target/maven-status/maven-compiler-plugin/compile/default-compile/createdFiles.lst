@@ -1,0 +1,5 @@
+com/azure/spring/ai/vectorstore/cosmosdb/CosmosDBVectorStore.class
+com/azure/spring/ai/vectorstore/cosmosdb/CosmosDBFilterExpressionConverter$1.class
+com/azure/spring/ai/vectorstore/cosmosdb/CosmosDBFilterExpressionConverter.class
+com/azure/spring/ai/vectorstore/cosmosdb/package-info.class
+com/azure/spring/ai/vectorstore/cosmosdb/CosmosDBVectorStore$Builder.class

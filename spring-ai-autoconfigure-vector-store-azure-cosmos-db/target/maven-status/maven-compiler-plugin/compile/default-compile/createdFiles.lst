@@ -1,0 +1,5 @@
+com/azure/spring/ai/vectorstore/cosmosdb/autoconfigure/package-info.class
+META-INF/spring-autoconfigure-metadata.properties
+com/azure/spring/ai/vectorstore/cosmosdb/autoconfigure/CosmosDBVectorStoreProperties.class
+META-INF/spring-configuration-metadata.json
+com/azure/spring/ai/vectorstore/cosmosdb/autoconfigure/CosmosDBVectorStoreAutoConfiguration.class

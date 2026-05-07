@@ -1,0 +1,5 @@
+com/azure/spring/ai/chat/memory/repository/cosmosdb/CosmosDBChatMemoryRepository.class
+com/azure/spring/ai/chat/memory/repository/cosmosdb/package-info.class
+com/azure/spring/ai/chat/memory/repository/cosmosdb/CosmosDBChatMemoryRepository$1.class
+com/azure/spring/ai/chat/memory/repository/cosmosdb/CosmosDBChatMemoryRepositoryConfig$Builder.class
+com/azure/spring/ai/chat/memory/repository/cosmosdb/CosmosDBChatMemoryRepositoryConfig.class

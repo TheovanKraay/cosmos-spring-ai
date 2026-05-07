@@ -1,0 +1,2 @@
+/tmp/spring-ai-cosmos/spring-ai-model-chat-memory-repository-cosmos-db/src/test/java/com/azure/spring/ai/chat/memory/repository/cosmosdb/CosmosDBChatMemoryRepositoryEmulatorIT.java
+/tmp/spring-ai-cosmos/spring-ai-model-chat-memory-repository-cosmos-db/src/test/java/com/azure/spring/ai/chat/memory/repository/cosmosdb/CosmosDBChatMemoryRepositoryIT.java

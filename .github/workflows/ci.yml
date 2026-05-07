@@ -1,0 +1,140 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    name: Build & Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'maven'
+
+      - name: Build and run unit tests
+        run: mvn verify -B
+
+  emulator-tests:
+    name: Cosmos DB Emulator Integration Tests
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'maven'
+
+      - name: Start Azure Cosmos DB Emulator
+        shell: pwsh
+        run: |
+          Write-Host "Launching Azure Cosmos DB Emulator"
+          $Emulator = "$env:ProgramFiles\Azure Cosmos DB Emulator\Microsoft.Azure.Cosmos.Emulator.exe"
+
+          if (!(Test-Path $Emulator)) {
+            Write-Error "Emulator not found at '$Emulator'"
+            exit 1
+          }
+
+          $startArgs = "/noexplorer /noui /enablepreview /disableratelimiting /partitioncount=50 /consistency=Session"
+          Write-Host "Starting emulator: $Emulator $startArgs"
+          $process = Start-Process $Emulator -ArgumentList $startArgs -ErrorAction Stop -PassThru
+          Write-Host "Emulator process started: PID=$($process.Id)"
+
+          # Poll /getstatus until running (exit code 2) or timeout
+          $Timeout = 600
+          $start = [DateTimeOffset]::Now
+          $stop = $start.AddSeconds($Timeout)
+          do {
+            $status = Start-Process $Emulator -ArgumentList "/getstatus" -PassThru -Wait
+            switch ($status.ExitCode) {
+              1 { Write-Host "Emulator is starting..." }
+              2 {
+                Write-Host "Cosmos DB Emulator is running"
+                break
+              }
+              3 { Write-Host "Emulator is stopped" }
+              default { Write-Host "Unrecognized status exit code: $($status.ExitCode)" }
+            }
+            if ($status.ExitCode -eq 2) { break }
+            Start-Sleep -Seconds 5
+          } while ([DateTimeOffset]::Now -lt $stop)
+
+          if ($status.ExitCode -ne 2) {
+            Write-Error "Emulator failed to reach Running status within $Timeout seconds"
+            exit 1
+          }
+
+      - name: Cosmos emulator diagnostics (on failure)
+        if: failure()
+        shell: pwsh
+        run: |
+          Get-Process | Where-Object { $_.ProcessName -match "Cosmos|DocumentDB" } | Format-Table -AutoSize
+          Get-Service | Where-Object { $_.Name -match "Cosmos|DocumentDB" } | Format-Table -AutoSize
+          Test-NetConnection localhost -Port 8081 | Format-List
+
+      - name: Import Cosmos DB Emulator certificate into JDK truststore
+        shell: pwsh
+        run: |
+          $certFile = "$env:TEMP\cosmos-emulator-root.cer"
+          $keystore  = "$env:JAVA_HOME\lib\security\cacerts"
+          $keytool   = "$env:JAVA_HOME\bin\keytool.exe"
+
+          Write-Host "Waiting for emulator Root CA in Cert:\LocalMachine\Root ..."
+          $deadline = (Get-Date).AddSeconds(60)
+          $cert = $null
+          while (-not $cert -and (Get-Date) -lt $deadline) {
+              $cert = Get-ChildItem Cert:\LocalMachine\Root | Where-Object {
+                  $_.FriendlyName -like "*DocumentDb*" -or
+                  $_.FriendlyName -like "*CosmosDb*"   -or
+                  $_.Subject       -like "*DocumentDb*"
+              } | Select-Object -First 1
+              if (-not $cert) { Start-Sleep -Seconds 3 }
+          }
+
+          if (-not $cert) {
+              Write-Host "Root store contents:"
+              Get-ChildItem Cert:\LocalMachine\Root | Select-Object Subject, FriendlyName | Format-Table
+              Write-Host "My store contents:"
+              Get-ChildItem Cert:\LocalMachine\My   | Select-Object Subject, FriendlyName | Format-Table
+              Write-Error "Cosmos DB emulator Root CA not found after 60 s"
+              exit 1
+          }
+
+          Write-Host "Found Root CA: Subject=$($cert.Subject) FriendlyName=$($cert.FriendlyName)"
+          Export-Certificate -Cert $cert -FilePath $certFile -Type CERT
+          Write-Host "Exported to $certFile"
+
+          & $keytool -importcert -noprompt -trustcacerts `
+              -alias CosmosDbEmulatorRootCA `
+              -file $certFile `
+              -keystore $keystore `
+              -storepass changeit
+          Write-Host "Root CA imported into JDK truststore successfully"
+
+      - name: Run emulator integration tests
+        shell: bash
+        run: |
+          mvn verify -B -Pemulator \
+            -Djunit.jupiter.execution.timeout.default=60s
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: emulator-test-reports
+          path: '**/surefire-reports/**'
+          retention-days: 7

@@ -67,9 +67,16 @@ Set `AZURE_COSMOSDB_ENDPOINT` environment variable pointing to your Cosmos DB ac
 mvn verify
 ```
 
+## Version Compatibility
+
+| Spring AI Version | Cosmos DB Module | Notes |
+|-------------------|-----------------|-------|
+| 1.x | Built-in | Cosmos DB support included directly in Spring AI |
+| 2.x | This project 1.x | Cosmos DB support moved to this standalone repo |
+
 ## Migration from Spring AI
 
-These modules were previously part of the [Spring AI](https://github.com/spring-projects/spring-ai) monorepo. If you're migrating:
+These modules were previously part of the [Spring AI](https://github.com/spring-projects/spring-ai) monorepo. If you're migrating from Spring AI 1.x:
 
 | Old GroupId | New GroupId |
 |-------------|-------------|

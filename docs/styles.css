@@ -1,0 +1,97 @@
+:root {
+  --primary: #0078D4;
+  --primary-dark: #005a9e;
+  --accent: #6DB33F;
+  --accent-dark: #5a9a30;
+  --bg: #fff;
+  --sidebar-bg: #f7f8fa;
+  --sidebar-w: 260px;
+  --header-h: 56px;
+  --text: #24292e;
+  --text-light: #586069;
+  --border: #e1e4e8;
+  --code-bg: #f6f8fa;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body { font-family: var(--font); color: var(--text); line-height: 1.6; background: var(--bg); }
+
+/* Header */
+.header {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  height: var(--header-h); background: var(--primary); color: #fff;
+  display: flex; align-items: center; padding: 0 24px; gap: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.15);
+}
+.header svg { flex-shrink: 0; }
+.header .title { font-size: 18px; font-weight: 600; }
+.header .subtitle { font-size: 13px; opacity: .8; margin-left: 8px; }
+.menu-toggle { display: none; background: none; border: none; color: #fff; font-size: 24px; cursor: pointer; }
+
+/* Layout */
+.layout { display: flex; margin-top: var(--header-h); min-height: calc(100vh - var(--header-h)); }
+
+/* Sidebar */
+.sidebar {
+  width: var(--sidebar-w); min-width: var(--sidebar-w); background: var(--sidebar-bg);
+  border-right: 1px solid var(--border); padding: 24px 0; overflow-y: auto;
+  position: sticky; top: var(--header-h); height: calc(100vh - var(--header-h));
+}
+.sidebar h3 { font-size: 11px; text-transform: uppercase; letter-spacing: .8px; color: var(--text-light); padding: 8px 20px 4px; }
+.sidebar a {
+  display: block; padding: 7px 20px; color: var(--text); text-decoration: none;
+  font-size: 14px; border-left: 3px solid transparent; transition: all .15s;
+}
+.sidebar a:hover { background: #e8ecf0; color: var(--primary); }
+.sidebar a.active { border-left-color: var(--primary); color: var(--primary); font-weight: 600; background: rgba(0,120,212,.06); }
+
+/* Content */
+.content { flex: 1; max-width: 860px; padding: 32px 40px 60px; }
+.content h1 { font-size: 28px; margin-bottom: 8px; color: var(--primary-dark); }
+.content h2 { font-size: 22px; margin: 32px 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+.content h3 { font-size: 17px; margin: 24px 0 8px; }
+.content p { margin: 10px 0; }
+.content ul, .content ol { margin: 10px 0 10px 24px; }
+.content li { margin: 4px 0; }
+.content a { color: var(--primary); }
+.content a:hover { text-decoration: underline; }
+.content strong { font-weight: 600; }
+
+/* Code */
+pre[class*="language-"] { background: var(--code-bg) !important; border: 1px solid var(--border); border-radius: 6px; padding: 16px; margin: 12px 0; overflow-x: auto; font-size: 13px; line-height: 1.5; }
+code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; font-size: 85%; }
+:not(pre) > code { background: var(--code-bg); padding: 2px 6px; border-radius: 3px; }
+
+/* Tables */
+table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+th { background: var(--primary); color: #fff; text-align: left; padding: 10px 12px; }
+td { padding: 9px 12px; border-bottom: 1px solid var(--border); }
+tr:nth-child(even) td { background: #f6f8fa; }
+
+/* Badges / cards */
+.badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+.badge-azure { background: #e6f2ff; color: var(--primary); }
+.badge-spring { background: #edf7e6; color: var(--accent-dark); }
+
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin: 20px 0; }
+.card {
+  border: 1px solid var(--border); border-radius: 8px; padding: 20px;
+  transition: box-shadow .2s, border-color .2s; text-decoration: none; color: var(--text);
+}
+.card:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgba(0,120,212,.12); }
+.card h3 { margin: 0 0 6px; font-size: 16px; color: var(--primary); }
+.card p { margin: 0; font-size: 13px; color: var(--text-light); }
+
+/* Tip boxes */
+.tip { border-left: 4px solid var(--accent); background: #f0f9eb; padding: 12px 16px; border-radius: 0 6px 6px 0; margin: 16px 0; font-size: 14px; }
+.tip strong { color: var(--accent-dark); }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .menu-toggle { display: block; }
+  .sidebar { position: fixed; left: -280px; top: var(--header-h); z-index: 90; width: 280px; min-width: 0; transition: left .25s; box-shadow: none; }
+  .sidebar.open { left: 0; box-shadow: 4px 0 12px rgba(0,0,0,.15); }
+  .content { padding: 24px 16px 40px; }
+}

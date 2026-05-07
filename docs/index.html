@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Spring AI Cosmos DB</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
+</head>
+<body>
+<header class="header">
+  <button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+  <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="13" stroke="#fff" stroke-width="1.5"/><circle cx="14" cy="14" r="4" fill="#fff"/><ellipse cx="14" cy="14" rx="12" ry="6" stroke="#fff" stroke-width="1.2" transform="rotate(30 14 14)"/><ellipse cx="14" cy="14" rx="12" ry="6" stroke="#fff" stroke-width="1.2" transform="rotate(-30 14 14)"/></svg>
+  <span class="title">Spring AI Cosmos DB</span>
+  <span class="subtitle">Documentation</span>
+</header>
+<div class="layout">
+<nav class="sidebar">
+  <h3>Getting Started</h3>
+  <a href="index.html" class="active">Overview</a>
+  <h3>Modules</h3>
+  <a href="vector-store.html">Vector Store</a>
+  <a href="vector-store-autoconfigure.html">Auto-Configuration</a>
+  <a href="chat-memory.html">Chat Memory</a>
+</nav>
+<main class="content">
+<h1>Spring AI Azure Cosmos DB</h1>
+<p>Spring AI integrations for <strong>Azure Cosmos DB</strong> — bringing the power of Microsoft's globally distributed database to the Spring AI ecosystem.</p>
+
+<div class="tip"><strong>💡 Tip:</strong> These modules work with Spring AI's standard abstractions, so you can swap implementations without changing your application code.</div>
+
+<h2>Modules</h2>
+<div class="cards">
+  <a class="card" href="vector-store.html">
+    <h3>🗄️ Vector Store</h3>
+    <p>Store document embeddings and perform similarity searches using DiskANN-powered vector indexing.</p>
+    <span class="badge badge-azure">Azure Cosmos DB</span>
+  </a>
+  <a class="card" href="vector-store-autoconfigure.html">
+    <h3>⚙️ Auto-Configuration</h3>
+    <p>Zero-config Spring Boot setup for the Cosmos DB Vector Store with sensible defaults.</p>
+    <span class="badge badge-spring">Spring Boot</span>
+  </a>
+  <a class="card" href="chat-memory.html">
+    <h3>💬 Chat Memory</h3>
+    <p>Persistent conversation storage using Cosmos DB for chat history and message retrieval.</p>
+    <span class="badge badge-azure">Azure Cosmos DB</span>
+  </a>
+</div>
+
+<h2>Quick Start</h2>
+<h3>1. Add the dependency</h3>
+<pre><code class="language-xml">&lt;dependency&gt;
+    &lt;groupId&gt;com.azure.spring.ai&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-ai-autoconfigure-vector-store-azure-cosmos-db&lt;/artifactId&gt;
+    &lt;version&gt;1.0.0-SNAPSHOT&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+
+<h3>2. Configure your connection</h3>
+<pre><code class="language-properties">spring.ai.vectorstore.cosmosdb.endpoint=https://your-account.documents.azure.com:443/
+spring.ai.vectorstore.cosmosdb.databaseName=my-database
+spring.ai.vectorstore.cosmosdb.containerName=my-vectors
+spring.ai.vectorstore.cosmosdb.vectorDimensions=1536</code></pre>
+
+<h3>3. Inject and use</h3>
+<pre><code class="language-java">@Autowired
+private VectorStore vectorStore;
+
+// Add documents
+vectorStore.add(List.of(new Document("Hello world")));
+
+// Search
+List&lt;Document&gt; results = vectorStore.similaritySearch(
+    SearchRequest.builder().query("Hello").topK(5).build());</code></pre>
+
+<h2>Requirements</h2>
+<ul>
+  <li>Java 17+</li>
+  <li>Spring Boot 3.x</li>
+  <li>Spring AI 1.0+</li>
+  <li>An Azure Cosmos DB account (NoSQL API)</li>
+  <li>An embedding model provider (OpenAI, Azure OpenAI, etc.)</li>
+</ul>
+
+<h2>Authentication</h2>
+<p>All modules support two authentication methods:</p>
+<ul>
+  <li><strong>Key-based:</strong> Provide your Cosmos DB key in configuration</li>
+  <li><strong>Azure Identity (recommended):</strong> Uses <a href="https://learn.microsoft.com/azure/developer/java/sdk/authentication/credential-chains#defaultazurecredential-overview">DefaultAzureCredential</a> for managed identity, service principal, and other Azure credential sources</li>
+</ul>
+</main>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-xml-doc.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-properties.min.js"></script>
+</body>
+</html>

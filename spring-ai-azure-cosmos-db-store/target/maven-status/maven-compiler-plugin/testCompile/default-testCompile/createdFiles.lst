@@ -1,9 +1,0 @@
-com/azure/spring/ai/vectorstore/cosmosdb/CosmosDBVectorStoreIT.class
-com/azure/spring/ai/vectorstore/cosmosdb/CosmosDBVectorStoreIT$TestApplication.class
-com/azure/spring/ai/vectorstore/cosmosdb/CosmosDBVectorStoreEmulatorIT.class
-com/azure/spring/ai/vectorstore/cosmosdb/CosmosDBVectorStoreEmulatorIT$TestApplication.class
-com/azure/spring/ai/vectorstore/cosmosdb/CosmosDBVectorStoreIT$TestApplication$1.class
-com/azure/spring/ai/vectorstore/cosmosdb/CosmosDBVectorStoreWithMetadataPartitionKeyIT.class
-com/azure/spring/ai/vectorstore/cosmosdb/CosmosDBVectorStoreEmulatorIT$TestApplication$1.class
-com/azure/spring/ai/vectorstore/cosmosdb/CosmosDBVectorStoreWithMetadataPartitionKeyIT$TestApplication.class
-com/azure/spring/ai/vectorstore/cosmosdb/CosmosDBVectorStoreWithMetadataPartitionKeyIT$TestApplication$1.class

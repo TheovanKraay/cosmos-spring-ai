@@ -22,7 +22,7 @@ jobs:
           cache: 'maven'
 
       - name: Build and run unit tests
-        run: mvn verify -B
+        run: mvn verify -B -DskipITs
 
   emulator-tests:
     name: Cosmos DB Emulator Integration Tests

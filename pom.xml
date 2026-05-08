@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Aggregator POM - allows building all modules from the root with `mvn verify`.
+  ~ This is NOT a parent POM. Each module is independently versioned and self-contained.
+  -->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.azure.spring.ai</groupId>
+    <artifactId>spring-ai-cosmos-aggregator</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <name>Spring AI Azure Cosmos DB (Aggregator)</name>
+    <description>Aggregator for building all Spring AI Cosmos DB modules together</description>
+
+    <modules>
+        <module>spring-ai-azure-cosmos-db-store</module>
+        <module>spring-ai-autoconfigure-vector-store-azure-cosmos-db</module>
+        <module>spring-ai-model-chat-memory-repository-cosmos-db</module>
+    </modules>
+</project>

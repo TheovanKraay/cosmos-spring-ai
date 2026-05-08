@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Chat Memory — Spring AI Cosmos DB</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
+</head>
+<body>
+<header class="header">
+  <button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+  <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="13" stroke="#fff" stroke-width="1.5"/><circle cx="14" cy="14" r="4" fill="#fff"/><ellipse cx="14" cy="14" rx="12" ry="6" stroke="#fff" stroke-width="1.2" transform="rotate(30 14 14)"/><ellipse cx="14" cy="14" rx="12" ry="6" stroke="#fff" stroke-width="1.2" transform="rotate(-30 14 14)"/></svg>
+  <span class="title">Spring AI Cosmos DB</span>
+  <span class="subtitle">Documentation</span>
+  <a href="https://github.com/TheovanKraay/spring-ai-cosmos" class="github-link" style="margin-left:auto;color:#fff;text-decoration:none;font-size:14px;display:flex;align-items:center;gap:6px;" target="_blank"><svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a>
+</header>
+<div class="layout">
+<nav class="sidebar">
+  <h3>Getting Started</h3>
+  <a href="index.html">Overview</a>
+  <h3>Modules</h3>
+  <a href="vector-store.html">Vector Store</a>
+  <a href="vector-store-autoconfigure.html">Auto-Configuration</a>
+  <a href="chat-memory.html" class="active">Chat Memory</a>
+</nav>
+<main class="content">
+<h1>Azure Cosmos DB Chat Memory Repository</h1>
+<p>The <code>CosmosDBChatMemoryRepository</code> provides persistent chat memory storage using Azure Cosmos DB. It implements the Spring AI <code>ChatMemoryRepository</code> interface for storing and retrieving conversation messages.</p>
+
+<h2>Dependency</h2>
+<pre><code class="language-xml">&lt;dependency&gt;
+    &lt;groupId&gt;com.azure.spring.ai&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-ai-model-chat-memory-repository-cosmos-db&lt;/artifactId&gt;
+    &lt;version&gt;1.0.0-SNAPSHOT&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+
+<h2>Manual Configuration</h2>
+<pre><code class="language-java">import com.azure.cosmos.CosmosAsyncClient;
+import com.azure.cosmos.CosmosClientBuilder;
+import com.azure.identity.DefaultAzureCredentialBuilder;
+import com.azure.spring.ai.chat.memory.repository.cosmosdb.CosmosDBChatMemoryRepository;
+import com.azure.spring.ai.chat.memory.repository.cosmosdb.CosmosDBChatMemoryRepositoryConfig;
+import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.memory.MessageWindowChatMemory;
+
+// Create the Cosmos DB client
+CosmosAsyncClient cosmosClient = new CosmosClientBuilder()
+    .endpoint("https://your-account.documents.azure.com:443/")
+    .credential(new DefaultAzureCredentialBuilder().build())
+    .userAgentSuffix("SpringAI-CDBNoSQL-ChatMemoryRepository")
+    .gatewayMode()
+    .buildAsyncClient();
+
+// Create the repository
+ChatMemoryRepository chatMemoryRepository = CosmosDBChatMemoryRepository
+    .create(CosmosDBChatMemoryRepositoryConfig.builder()
+        .withCosmosClient(cosmosClient)
+        .withDatabaseName("chat-memory-db")
+        .withContainerName("conversations")
+        .build());
+
+// Use with MessageWindowChatMemory
+ChatMemory chatMemory = MessageWindowChatMemory.builder()
+    .chatMemoryRepository(chatMemoryRepository)
+    .maxMessages(10)
+    .build();</code></pre>
+
+<h2>Spring Boot Auto-Configuration</h2>
+<p>When using Spring Boot, configure via <code>application.properties</code>:</p>
+<pre><code class="language-properties">spring.ai.chat.memory.repository.cosmosdb.endpoint=https://your-account.documents.azure.com:443/
+spring.ai.chat.memory.repository.cosmosdb.database-name=SpringAIChatMemory
+spring.ai.chat.memory.repository.cosmosdb.container-name=ChatMemory
+spring.ai.chat.memory.repository.cosmosdb.connection-mode=gateway</code></pre>
+
+<p>Then inject the repository:</p>
+<pre><code class="language-java">import com.azure.spring.ai.chat.memory.repository.cosmosdb.CosmosDBChatMemoryRepository;
+import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.memory.MessageWindowChatMemory;
+import org.springframework.beans.factory.annotation.Autowired;
+
+@Autowired
+CosmosDBChatMemoryRepository chatMemoryRepository;
+
+ChatMemory chatMemory = MessageWindowChatMemory.builder()
+    .chatMemoryRepository(chatMemoryRepository)
+    .maxMessages(10)
+    .build();</code></pre>
+
+<h2>Configuration Properties</h2>
+<table>
+<tr><th>Property</th><th>Description</th><th>Default</th></tr>
+<tr><td><code>spring.ai.chat.memory.repository.cosmosdb.endpoint</code></td><td>Azure Cosmos DB endpoint URI</td><td>(required)</td></tr>
+<tr><td><code>spring.ai.chat.memory.repository.cosmosdb.key</code></td><td>Primary or secondary key (if absent, uses Azure Identity)</td><td></td></tr>
+<tr><td><code>spring.ai.chat.memory.repository.cosmosdb.connection-mode</code></td><td>Connection mode: <code>direct</code> or <code>gateway</code></td><td><code>gateway</code></td></tr>
+<tr><td><code>spring.ai.chat.memory.repository.cosmosdb.database-name</code></td><td>Database name</td><td><code>SpringAIChatMemory</code></td></tr>
+<tr><td><code>spring.ai.chat.memory.repository.cosmosdb.container-name</code></td><td>Container name</td><td><code>ChatMemory</code></td></tr>
+<tr><td><code>spring.ai.chat.memory.repository.cosmosdb.partition-key-path</code></td><td>Partition key path</td><td><code>/conversationId</code></td></tr>
+</table>
+
+<h2>Authentication</h2>
+<p>Two methods are supported:</p>
+<ol>
+  <li><strong>Key-based authentication:</strong> Provide the <code>spring.ai.chat.memory.repository.cosmosdb.key</code> property.</li>
+  <li><strong>Azure Identity authentication</strong> (recommended): When no key is provided, the repository uses <a href="https://learn.microsoft.com/azure/developer/java/sdk/authentication/credential-chains#defaultazurecredential-overview">DefaultAzureCredential</a> for managed identity, service principal, or other Azure credential sources.</li>
+</ol>
+
+<h2>Schema Initialization</h2>
+<div class="tip"><strong>💡 Tip:</strong> The repository automatically creates the database and container if they don't exist. The container uses <code>/conversationId</code> as the partition key for optimal performance. No manual schema setup is required.</div>
+
+<h2>Operations</h2>
+<p>The repository supports the following operations:</p>
+<pre><code class="language-java">// Save messages for a conversation
+chatMemoryRepository.saveAll(conversationId, messages);
+
+// Retrieve messages for a conversation
+List&lt;Message&gt; messages = chatMemoryRepository.findByConversationId(conversationId);
+
+// List all conversation IDs
+List&lt;String&gt; ids = chatMemoryRepository.findConversationIds();
+
+// Delete a conversation
+chatMemoryRepository.deleteByConversationId(conversationId);</code></pre>
+<p>Messages are stored with their type (USER, ASSISTANT, SYSTEM) and retrieved in the order they were saved, which is the expected format for LLM conversation history.</p>
+</main>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-xml-doc.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-properties.min.js"></script>
+</body>
+</html>

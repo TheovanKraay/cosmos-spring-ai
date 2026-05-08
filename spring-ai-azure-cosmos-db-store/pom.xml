@@ -11,7 +11,7 @@
 
     <name>Spring AI Vector Store - Azure Cosmos DB</name>
     <description>Spring AI Vector Store for Azure Cosmos DB</description>
-    <url>https://github.com/TheovanKraay/spring-ai-cosmos</url>
+    <url>https://github.com/AzureCosmosDB/spring-ai</url>
 
     <licenses>
         <license>

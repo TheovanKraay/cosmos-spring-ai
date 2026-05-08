@@ -11,7 +11,7 @@
 
     <name>Spring AI Azure Cosmos DB Chat Memory Repository</name>
     <description>Spring AI Azure Cosmos DB Chat Memory Repository implementation</description>
-    <url>https://github.com/TheovanKraay/spring-ai-cosmos</url>
+    <url>https://github.com/AzureCosmosDB/spring-ai</url>
 
     <licenses>
         <license>

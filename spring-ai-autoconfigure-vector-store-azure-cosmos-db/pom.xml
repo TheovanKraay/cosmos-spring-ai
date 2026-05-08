@@ -11,7 +11,7 @@
 
     <name>Spring AI Auto Configuration for Azure Cosmos DB Vector Store</name>
     <description>Spring AI Auto Configuration for Azure Cosmos DB vector store</description>
-    <url>https://github.com/TheovanKraay/spring-ai-cosmos</url>
+    <url>https://github.com/AzureCosmosDB/spring-ai</url>
 
     <licenses>
         <license>

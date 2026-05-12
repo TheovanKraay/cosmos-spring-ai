@@ -3,10 +3,18 @@ name: Release
 on:
   push:
     tags:
-      # stable: <module>-v1.2.3
-      - 'spring-ai-*-v[0-9]*.[0-9]*.[0-9]*'
-      # beta:   <module>-v1.2.3-beta.1
-      - 'spring-ai-*-v[0-9]*.[0-9]*.[0-9]*-beta.[0-9]*'
+      # Triggers are an explicit per-module allowlist mirroring VALID_MODULES
+      # in parse-tag. Avoid 'spring-ai-*' wildcards: those would start the
+      # workflow for any spring-ai-* tag and fail noisily in parse-tag.
+      #
+      # Stable: <module>-vMAJOR.MINOR.PATCH
+      - 'spring-ai-azure-cosmos-db-store-v[0-9]*.[0-9]*.[0-9]*'
+      - 'spring-ai-autoconfigure-vector-store-azure-cosmos-db-v[0-9]*.[0-9]*.[0-9]*'
+      - 'spring-ai-model-chat-memory-repository-cosmos-db-v[0-9]*.[0-9]*.[0-9]*'
+      # Beta:   <module>-vMAJOR.MINOR.PATCH-beta.N
+      - 'spring-ai-azure-cosmos-db-store-v[0-9]*.[0-9]*.[0-9]*-beta.[0-9]*'
+      - 'spring-ai-autoconfigure-vector-store-azure-cosmos-db-v[0-9]*.[0-9]*.[0-9]*-beta.[0-9]*'
+      - 'spring-ai-model-chat-memory-repository-cosmos-db-v[0-9]*.[0-9]*.[0-9]*-beta.[0-9]*'
   workflow_dispatch:
     inputs:
       tag:
@@ -116,7 +124,11 @@ jobs:
           RELEASE_TAG: ${{ needs.parse-tag.outputs.tag }}
         run: |
           set -euo pipefail
-          git fetch origin main --depth=1
+          # Full history of main is required so 'merge-base --is-ancestor'
+          # can find the tag commit even when it predates main's HEAD.
+          # A shallow (--depth=1) fetch would falsely reject any tag that
+          # isn't main's tip.
+          git fetch --no-tags origin main
           TAG_COMMIT=$(git rev-parse "refs/tags/${RELEASE_TAG}^{commit}")
           if ! git merge-base --is-ancestor "$TAG_COMMIT" origin/main; then
             echo "::error::Tag '${RELEASE_TAG}' (commit ${TAG_COMMIT}) is not reachable from origin/main. Release tags must point to merged commits."
@@ -132,7 +144,13 @@ jobs:
           cache: 'maven'
 
       - name: Run unit tests
-        run: mvn verify -B -DskipITs
+        env:
+          MODULE: ${{ needs.parse-tag.outputs.module }}
+        # Build/test only the target module and its required reactor
+        # dependencies. Modules are independently versioned, so a full
+        # reactor build can fail when sibling modules legitimately
+        # reference different versions of one another.
+        run: mvn -pl "$MODULE" -am verify -B -DskipITs
 
       - name: Upload test reports
         if: failure()
@@ -187,8 +205,13 @@ jobs:
           MODULE: ${{ needs.parse-tag.outputs.module }}
         run: |
           set -euo pipefail
-          # Build the reactor first so dependency:list can resolve internal modules.
-          mvn install -DskipTests -B -q
+          # Install only the target module + its required reactor deps
+          # (-am = also-make) so dependency:list can resolve internal
+          # sibling modules from the local repo. A full-reactor 'mvn install'
+          # would fail when modules at independent versions reference each
+          # other (e.g. autoconfigure pinning a released store while another
+          # sibling is on SNAPSHOT).
+          mvn -pl "$MODULE" -am install -DskipTests -B -q
 
           INTERNAL_SNAPSHOTS=$(mvn dependency:list -pl "$MODULE" -DincludeScope=runtime -B -q -DoutputFile=/dev/stdout 2>/dev/null \
             | grep -F 'com.azure.spring.ai' \

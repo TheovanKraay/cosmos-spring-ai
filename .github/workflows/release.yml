@@ -1,0 +1,320 @@
+name: Release
+
+on:
+  push:
+    tags:
+      # Triggers are an explicit per-module allowlist mirroring VALID_MODULES
+      # in parse-tag. Avoid 'spring-ai-*' wildcards: those would start the
+      # workflow for any spring-ai-* tag and fail noisily in parse-tag.
+      #
+      # Stable: <module>-vMAJOR.MINOR.PATCH
+      - 'spring-ai-azure-cosmos-db-store-v[0-9]*.[0-9]*.[0-9]*'
+      - 'spring-ai-autoconfigure-vector-store-azure-cosmos-db-v[0-9]*.[0-9]*.[0-9]*'
+      - 'spring-ai-model-chat-memory-repository-cosmos-db-v[0-9]*.[0-9]*.[0-9]*'
+      # Beta:   <module>-vMAJOR.MINOR.PATCH-beta.N
+      - 'spring-ai-azure-cosmos-db-store-v[0-9]*.[0-9]*.[0-9]*-beta.[0-9]*'
+      - 'spring-ai-autoconfigure-vector-store-azure-cosmos-db-v[0-9]*.[0-9]*.[0-9]*-beta.[0-9]*'
+      - 'spring-ai-model-chat-memory-repository-cosmos-db-v[0-9]*.[0-9]*.[0-9]*-beta.[0-9]*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (e.g. spring-ai-azure-cosmos-db-store-v0.1.0-beta.1)'
+        required: true
+        type: string
+
+# One release per module-version at a time; different modules can run in parallel
+concurrency:
+  group: ${{ github.workflow }}-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+# Default to least-privilege; the publish job re-grants what it needs.
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+
+  # ──────────────────────────────────────────────────────────
+  #  Parse — extract module name and version from the tag
+  # ──────────────────────────────────────────────────────────
+  parse-tag:
+    name: Parse Release Tag
+    runs-on: ubuntu-latest
+    outputs:
+      module: ${{ steps.parse.outputs.module }}
+      version: ${{ steps.parse.outputs.version }}
+      tag: ${{ steps.parse.outputs.tag }}
+      is_prerelease: ${{ steps.parse.outputs.is_prerelease }}
+    steps:
+      - name: Parse module and version from tag
+        id: parse
+        env:
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          set -euo pipefail
+          TAG="$RELEASE_TAG"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+          # Allowlist-driven parser: try each known module's "<module>-v" prefix
+          # in turn. Strict version regex enforces semver-with-optional-beta so
+          # malformed tags or future qualifiers can't slip through. This avoids
+          # any ambiguity around module names that themselves contain "-v"
+          # (e.g. spring-ai-autoconfigure-vector-store-azure-cosmos-db).
+          VALID_MODULES=(
+            "spring-ai-azure-cosmos-db-store"
+            "spring-ai-autoconfigure-vector-store-azure-cosmos-db"
+            "spring-ai-model-chat-memory-repository-cosmos-db"
+          )
+
+          MODULE=""
+          VERSION=""
+          for candidate in "${VALID_MODULES[@]}"; do
+            prefix="${candidate}-v"
+            if [[ "$TAG" == "$prefix"* ]]; then
+              parsed_version="${TAG#"$prefix"}"
+              if [[ "$parsed_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-beta\.[0-9]+)?$ ]]; then
+                MODULE="$candidate"
+                VERSION="$parsed_version"
+                break
+              fi
+            fi
+          done
+
+          if [ -z "$MODULE" ]; then
+            echo "::error::Invalid release tag '$TAG'. Expected '<module>-v<MAJOR>.<MINOR>.<PATCH>[-beta.N]' where module is one of: ${VALID_MODULES[*]}"
+            exit 1
+          fi
+
+          IS_PRERELEASE=false
+          if [[ "$VERSION" == *-beta.* ]]; then
+            IS_PRERELEASE=true
+          fi
+
+          echo "module=$MODULE" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "is_prerelease=$IS_PRERELEASE" >> "$GITHUB_OUTPUT"
+          echo "Releasing $MODULE version $VERSION (tag: $TAG, prerelease: $IS_PRERELEASE)"
+
+  # ──────────────────────────────────────────────────────────
+  #  Gate 1 — Unit tests (always runs, against the tagged commit)
+  # ──────────────────────────────────────────────────────────
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: [parse-tag]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.parse-tag.outputs.tag }}
+          fetch-depth: 0
+
+      - name: Verify tag exists and points at a real commit
+        env:
+          RELEASE_TAG: ${{ needs.parse-tag.outputs.tag }}
+        run: |
+          set -euo pipefail
+          if ! git rev-parse -q --verify "refs/tags/${RELEASE_TAG}^{commit}" >/dev/null; then
+            echo "::error::Tag '${RELEASE_TAG}' does not exist in the repo. For workflow_dispatch, the tag must be pushed before invoking this workflow."
+            exit 1
+          fi
+          echo "Tag verified: ${RELEASE_TAG} -> $(git rev-parse "refs/tags/${RELEASE_TAG}^{commit}")"
+
+      - name: Verify tag is reachable from main
+        env:
+          RELEASE_TAG: ${{ needs.parse-tag.outputs.tag }}
+        run: |
+          set -euo pipefail
+          # Full history of main is required so 'merge-base --is-ancestor'
+          # can find the tag commit even when it predates main's HEAD.
+          # A shallow (--depth=1) fetch would falsely reject any tag that
+          # isn't main's tip.
+          git fetch --no-tags origin main
+          TAG_COMMIT=$(git rev-parse "refs/tags/${RELEASE_TAG}^{commit}")
+          if ! git merge-base --is-ancestor "$TAG_COMMIT" origin/main; then
+            echo "::error::Tag '${RELEASE_TAG}' (commit ${TAG_COMMIT}) is not reachable from origin/main. Release tags must point to merged commits."
+            exit 1
+          fi
+          echo "Tag commit is reachable from main."
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'maven'
+
+      - name: Run unit tests
+        env:
+          MODULE: ${{ needs.parse-tag.outputs.module }}
+        # Build/test only the target module and its required reactor
+        # dependencies. Modules are independently versioned, so a full
+        # reactor build can fail when sibling modules legitimately
+        # reference different versions of one another.
+        run: mvn -pl "$MODULE" -am verify -B -DskipITs
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-reports
+          path: '**/surefire-reports/**'
+          retention-days: 30
+
+  # ──────────────────────────────────────────────────────────
+  #  Publish — runs after unit tests pass
+  # ──────────────────────────────────────────────────────────
+  publish:
+    name: Publish ${{ needs.parse-tag.outputs.module }} ${{ needs.parse-tag.outputs.version }}
+    runs-on: ubuntu-latest
+    needs: [parse-tag, unit-tests]
+    if: |
+      needs.parse-tag.result == 'success' &&
+      needs.unit-tests.result == 'success'
+    environment: production
+    permissions:
+      contents: write   # create GitHub Release & upload assets
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.parse-tag.outputs.tag }}
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'maven'
+
+      - name: Verify POM version matches tag
+        env:
+          MODULE: ${{ needs.parse-tag.outputs.module }}
+          EXPECTED: ${{ needs.parse-tag.outputs.version }}
+        run: |
+          set -euo pipefail
+          ACTUAL=$(mvn help:evaluate -pl "$MODULE" -Dexpression=project.version -q -DforceStdout)
+          if [ "$ACTUAL" != "$EXPECTED" ]; then
+            echo "::error::Version mismatch: $MODULE/pom.xml has version '$ACTUAL' but tag expects '$EXPECTED'. Update <version> in $MODULE/pom.xml before tagging."
+            exit 1
+          fi
+          echo "Version verified: $MODULE = $EXPECTED"
+
+      - name: Reject internal SNAPSHOT dependencies (com.azure.spring.ai)
+        env:
+          MODULE: ${{ needs.parse-tag.outputs.module }}
+        run: |
+          set -euo pipefail
+          # Install only the target module + its required reactor deps
+          # (-am = also-make) so dependency:list can resolve internal
+          # sibling modules from the local repo. A full-reactor 'mvn install'
+          # would fail when modules at independent versions reference each
+          # other (e.g. autoconfigure pinning a released store while another
+          # sibling is on SNAPSHOT).
+          mvn -pl "$MODULE" -am install -DskipTests -B -q
+
+          INTERNAL_SNAPSHOTS=$(mvn dependency:list -pl "$MODULE" -DincludeScope=runtime -B -q -DoutputFile=/dev/stdout 2>/dev/null \
+            | grep -F 'com.azure.spring.ai' \
+            | grep -F -- '-SNAPSHOT' || true)
+
+          if [ -n "$INTERNAL_SNAPSHOTS" ]; then
+            echo "::error::Module '$MODULE' depends on internal SNAPSHOT artifacts. Release the dependency first, then bump the version property in $MODULE/pom.xml:"
+            echo "$INTERNAL_SNAPSHOTS"
+            exit 1
+          fi
+          echo "No internal com.azure.spring.ai SNAPSHOT dependencies."
+
+      - name: Warn on external SNAPSHOT dependencies
+        env:
+          MODULE: ${{ needs.parse-tag.outputs.module }}
+        run: |
+          set -euo pipefail
+          # External snapshots (e.g. Spring AI 2.0.0-SNAPSHOT) are warned about
+          # but not blocked. Block when this repo's deps move off snapshots.
+          EXTERNAL_SNAPSHOTS=$(mvn dependency:list -pl "$MODULE" -DincludeScope=runtime -B -q -DoutputFile=/dev/stdout 2>/dev/null \
+            | grep -F -- '-SNAPSHOT' \
+            | grep -v -F 'com.azure.spring.ai' || true)
+
+          if [ -n "$EXTERNAL_SNAPSHOTS" ]; then
+            echo "::warning::Release artifact has external SNAPSHOT dependencies. Consumers may not be able to resolve them once upstream snapshots roll over:"
+            echo "$EXTERNAL_SNAPSHOTS"
+          else
+            echo "No external SNAPSHOT dependencies."
+          fi
+
+      - name: Deploy module to staging
+        env:
+          MODULE: ${{ needs.parse-tag.outputs.module }}
+        run: |
+          set -euo pipefail
+          # Deploy only the target module to a local staging directory.
+          # maven-deploy-plugin 3.x uses 'id::url' (the legacy 'id::layout::url'
+          # was removed in 3.0.0).
+          mvn deploy -pl "$MODULE" -DskipTests -B \
+            -DaltDeploymentRepository="local::file://${{ github.workspace }}/staging"
+
+      - name: Verify staged artifacts
+        env:
+          MODULE: ${{ needs.parse-tag.outputs.module }}
+          VERSION: ${{ needs.parse-tag.outputs.version }}
+        run: |
+          set -euo pipefail
+          BASE="staging/com/azure/spring/ai/${MODULE}/${VERSION}"
+          ERRORS=0
+
+          check_artifact() {
+            local label=$1 path=$2
+            if [ -f "$path" ]; then
+              echo "  ✓ ${label}: $(basename "$path")"
+            else
+              echo "::error::Missing ${label} artifact at expected path: $path"
+              ERRORS=$((ERRORS + 1))
+            fi
+          }
+
+          echo "--- Checking $MODULE $VERSION (expected base: $BASE) ---"
+          check_artifact pom     "${BASE}/${MODULE}-${VERSION}.pom"
+          check_artifact jar     "${BASE}/${MODULE}-${VERSION}.jar"
+          check_artifact sources "${BASE}/${MODULE}-${VERSION}-sources.jar"
+          check_artifact javadoc "${BASE}/${MODULE}-${VERSION}-javadoc.jar"
+
+          if [ "$ERRORS" -gt 0 ]; then
+            echo "::error::${ERRORS} required artifact(s) missing"
+            exit 1
+          fi
+          echo "All artifacts verified for $MODULE $VERSION"
+
+      - name: Collect release assets and compute checksums
+        env:
+          MODULE: ${{ needs.parse-tag.outputs.module }}
+          VERSION: ${{ needs.parse-tag.outputs.version }}
+        run: |
+          set -euo pipefail
+          BASE="staging/com/azure/spring/ai/${MODULE}/${VERSION}"
+          mkdir -p release-assets
+          cp "${BASE}/${MODULE}-${VERSION}.pom"          release-assets/
+          cp "${BASE}/${MODULE}-${VERSION}.jar"          release-assets/
+          cp "${BASE}/${MODULE}-${VERSION}-sources.jar"  release-assets/
+          cp "${BASE}/${MODULE}-${VERSION}-javadoc.jar"  release-assets/
+
+          ( cd release-assets && sha512sum * > SHA512SUMS )
+
+          echo "Release assets:"
+          ls -la release-assets/
+
+      - name: Upload staging repository (full Maven layout)
+        uses: actions/upload-artifact@v4
+        with:
+          name: maven-staging-${{ needs.parse-tag.outputs.module }}-${{ needs.parse-tag.outputs.version }}
+          path: staging/
+          retention-days: 90
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.parse-tag.outputs.tag }}
+          name: "${{ needs.parse-tag.outputs.module }} ${{ needs.parse-tag.outputs.version }}"
+          generate_release_notes: true
+          prerelease: ${{ needs.parse-tag.outputs.is_prerelease == 'true' }}
+          files: release-assets/*
+          fail_on_unmatched_files: true

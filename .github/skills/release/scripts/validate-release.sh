@@ -130,14 +130,22 @@ else
 fi
 
 # Tag must not exist (preflight + tag); for prepare it's still useful info.
+# `git ls-remote` failure is treated as a hard error, NOT silently as
+# "tag absent" — see review on PR #37.
 LOCAL_TAG=$(git tag -l "$TAG" 2>/dev/null || true)
-REMOTE_TAG=$(git ls-remote --tags origin "refs/tags/$TAG" 2>/dev/null | head -1 || true)
 if [[ -n "$LOCAL_TAG" ]]; then
     fail "Tag '$TAG' already exists locally. Delete with: git tag -d $TAG"
-elif [[ -n "$REMOTE_TAG" ]]; then
-    fail "Tag '$TAG' already exists on remote. Delete with: git push origin :refs/tags/$TAG"
 else
-    pass "Tag '$TAG' does not exist locally or on remote"
+    if REMOTE_LS_OUT=$(git ls-remote --tags origin "refs/tags/$TAG" 2>&1); then
+        REMOTE_TAG=$(printf '%s\n' "$REMOTE_LS_OUT" | head -1)
+        if [[ -n "$REMOTE_TAG" ]]; then
+            fail "Tag '$TAG' already exists on remote. Delete with: git push origin :refs/tags/$TAG"
+        else
+            pass "Tag '$TAG' does not exist locally or on remote"
+        fi
+    else
+        fail "git ls-remote against origin failed; cannot verify whether tag '$TAG' already exists. Check network/credentials. Output: $REMOTE_LS_OUT"
+    fi
 fi
 
 case "$PHASE" in
@@ -160,12 +168,15 @@ case "$PHASE" in
             fail "Working tree has uncommitted changes. Commit or stash them first."
         fi
 
-        git fetch origin main --quiet 2>/dev/null || true
-        if [[ "$(git rev-parse HEAD 2>/dev/null)" == "$(git rev-parse origin/main 2>/dev/null)" ]]; then
-            pass "Local main is up to date with origin/main"
+        if git fetch origin main --quiet 2>/dev/null; then
+            if [[ "$(git rev-parse HEAD 2>/dev/null)" == "$(git rev-parse origin/main 2>/dev/null)" ]]; then
+                pass "Local main is up to date with origin/main"
+            else
+                BEHIND=$(git rev-list --count HEAD..origin/main 2>/dev/null || echo "?")
+                fail "Local main is $BEHIND commit(s) behind origin/main. Run: git pull origin main"
+            fi
         else
-            BEHIND=$(git rev-list --count HEAD..origin/main 2>/dev/null || echo "?")
-            fail "Local main is $BEHIND commit(s) behind origin/main. Run: git pull origin main"
+            fail "git fetch origin main failed; cannot verify local main is up to date. Check network/credentials. (preflight phase requires network access.)"
         fi
 
         # CHANGELOG must at least exist with [Unreleased]
@@ -304,13 +315,16 @@ case "$PHASE" in
             fail "Working tree has uncommitted changes."
         fi
 
-        git fetch origin main --quiet 2>/dev/null || true
-        LOCAL_HEAD=$(git rev-parse HEAD 2>/dev/null || echo "?")
-        REMOTE_HEAD=$(git rev-parse origin/main 2>/dev/null || echo "?")
-        if [[ "$LOCAL_HEAD" == "$REMOTE_HEAD" ]]; then
-            pass "HEAD ($LOCAL_HEAD) equals origin/main"
+        if git fetch origin main --quiet 2>/dev/null; then
+            LOCAL_HEAD=$(git rev-parse HEAD 2>/dev/null || echo "?")
+            REMOTE_HEAD=$(git rev-parse origin/main 2>/dev/null || echo "?")
+            if [[ "$LOCAL_HEAD" == "$REMOTE_HEAD" ]]; then
+                pass "HEAD ($LOCAL_HEAD) equals origin/main"
+            else
+                fail "HEAD ($LOCAL_HEAD) does NOT equal origin/main ($REMOTE_HEAD). Run: git pull origin main"
+            fi
         else
-            fail "HEAD ($LOCAL_HEAD) does NOT equal origin/main ($REMOTE_HEAD). Run: git pull origin main"
+            fail "git fetch origin main failed; cannot verify HEAD matches origin/main. Check network/credentials. (tag phase requires network access — without it the wrong commit could be tagged.)"
         fi
 
         # Module pom version on main equals target

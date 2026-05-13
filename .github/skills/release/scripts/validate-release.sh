@@ -260,21 +260,26 @@ case "$PHASE" in
                 MVN_CMD="$REPO_ROOT/mvnw"
             fi
             if ! command -v "$MVN_CMD" >/dev/null 2>&1 && [[ "$MVN_CMD" == "mvn" ]]; then
-                note "Neither ./mvnw nor mvn on PATH. Skipping Maven dependency:list check. release.yml will enforce."
+                fail "Neither ./mvnw nor mvn is on PATH. Cannot run internal SNAPSHOT check. Install Maven (or rely on ./mvnw) and retry, or re-run with --skip-mvn to defer this check to release.yml."
             else
                 echo "  ⏳ Running '$MVN_CMD -pl $MODULE -am install -DskipTests' to seed local repo (slow on first run)..."
                 if (cd "$REPO_ROOT" && "$MVN_CMD" -pl "$MODULE" -am install -DskipTests -B -q) 2>/dev/null; then
-                    INTERNAL_SNAPSHOTS=$(cd "$REPO_ROOT" && "$MVN_CMD" dependency:list -pl "$MODULE" -DincludeScope=runtime -B -q -DoutputFile=/dev/stdout 2>/dev/null \
-                        | grep -F 'com.azure.spring.ai' \
-                        | grep -F -- '-SNAPSHOT' || true)
-                    if [[ -z "$INTERNAL_SNAPSHOTS" ]]; then
-                        pass "No internal com.azure.spring.ai SNAPSHOT dependencies"
+                    if DEP_LIST_OUT=$(cd "$REPO_ROOT" && "$MVN_CMD" dependency:list -pl "$MODULE" -DincludeScope=runtime -B -q -DoutputFile=/dev/stdout 2>&1); then
+                        INTERNAL_SNAPSHOTS=$(printf '%s\n' "$DEP_LIST_OUT" \
+                            | grep -F 'com.azure.spring.ai' \
+                            | grep -F -- '-SNAPSHOT' || true)
+                        if [[ -z "$INTERNAL_SNAPSHOTS" ]]; then
+                            pass "No internal com.azure.spring.ai SNAPSHOT dependencies"
+                        else
+                            fail "Module depends on internal SNAPSHOT artifacts:"
+                            printf '%s\n' "$INTERNAL_SNAPSHOTS" | sed 's/^/      /'
+                        fi
                     else
-                        fail "Module depends on internal SNAPSHOT artifacts:"
-                        echo "$INTERNAL_SNAPSHOTS" | sed 's/^/      /'
+                        fail "mvn dependency:list failed; internal-SNAPSHOT check did NOT run. Fix the failure or re-run with --skip-mvn to defer this check to release.yml. Last lines of output:"
+                        printf '%s\n' "$DEP_LIST_OUT" | tail -10 | sed 's/^/      /'
                     fi
                 else
-                    note "Maven build failed; skipping internal-SNAPSHOT check (release.yml will catch it). Re-run with --skip-mvn after fixing the build."
+                    fail "Maven build (mvn -pl $MODULE -am install -DskipTests) failed; internal-SNAPSHOT check did NOT run. Fix the build or re-run with --skip-mvn to defer this check to release.yml."
                 fi
             fi
         fi

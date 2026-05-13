@@ -7,10 +7,17 @@
 #   validate-release.sh --phase tag       --module <m> --version <v>
 #
 # Phases:
-#   preflight — on `main`, before any release work. Cheap, offline-only checks.
-#   prepare   — on a `release/...` branch after edits. Includes Maven snapshot
-#               check (requires JDK + Maven + network).
+#   preflight — on `main`, before any release work. Verifies repo state,
+#               origin URL, branch, working tree, sync with origin/main,
+#               and CHANGELOG seed. Requires network (uses `git fetch` and
+#               `git ls-remote`).
+#   prepare   — on a `release/...` branch after edits. Verifies pom version,
+#               CHANGELOG entries, and (unless --skip-mvn) runs
+#               `mvn dependency:list` to catch internal SNAPSHOT deps.
+#               Requires JDK + Maven + network.
 #   tag       — on `main` after PR merge, immediately before pushing the tag.
+#               Re-verifies origin URL, branch, working tree, HEAD==origin/main,
+#               and pom version. Requires network.
 set -euo pipefail
 
 PHASE=""
@@ -85,6 +92,21 @@ read_property() {
     sed -n "s/.*<${prop}>\([^<]*\)<\/${prop}>.*/\1/p" "$pom" | head -1
 }
 
+# Strict origin URL check. Accepts only the canonical AzureCosmosDB/spring-ai
+# repository — not forks, mirrors, or look-alike names like
+# `AzureCosmosDB/spring-ai-test`. Supports both SSH and HTTPS clone forms with
+# an optional `.git` suffix and an optional trailing slash.
+check_origin_url() {
+    local url
+    url=$(git remote get-url origin 2>/dev/null || echo "")
+    local canonical_re='^(git@github\.com:|https://github\.com/)AzureCosmosDB/spring-ai(\.git)?/?$'
+    if [[ "$url" =~ $canonical_re ]]; then
+        pass "origin points at AzureCosmosDB/spring-ai ($url)"
+    else
+        fail "origin URL '$url' is not the canonical AzureCosmosDB/spring-ai repo. Expected one of: git@github.com:AzureCosmosDB/spring-ai(.git) or https://github.com/AzureCosmosDB/spring-ai(.git)."
+    fi
+}
+
 SEMVER_REGEX='^[0-9]+\.[0-9]+\.[0-9]+(-beta\.[0-9]+)?$'
 TAG="${MODULE}-v${VERSION}"
 POM="$REPO_ROOT/$MODULE/pom.xml"
@@ -122,13 +144,8 @@ case "$PHASE" in
 
     # ─────────────────────────────────────────────────────────────────────
     preflight)
-        # Origin must point at the canonical repo
-        ORIGIN_URL=$(git remote get-url origin 2>/dev/null || echo "")
-        if [[ "$ORIGIN_URL" == *"AzureCosmosDB/spring-ai"* ]]; then
-            pass "origin points at AzureCosmosDB/spring-ai ($ORIGIN_URL)"
-        else
-            fail "origin URL '$ORIGIN_URL' does not contain 'AzureCosmosDB/spring-ai'"
-        fi
+        # Origin must point at the canonical repo (exact match, not substring).
+        check_origin_url
 
         CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "?")
         if [[ "$CURRENT_BRANCH" == "main" ]]; then
@@ -265,6 +282,10 @@ case "$PHASE" in
 
     # ─────────────────────────────────────────────────────────────────────
     tag)
+        # Origin must point at the canonical repo. Otherwise the tag would be
+        # pushed to a fork or unrelated repo and never trigger release.yml.
+        check_origin_url
+
         CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "?")
         if [[ "$CURRENT_BRANCH" == "main" ]]; then
             pass "On 'main' branch"

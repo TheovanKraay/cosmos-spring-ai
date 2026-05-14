@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Auto-Configuration — Spring AI Cosmos DB</title>
+<title>Vector Store Auto-Configuration — Spring AI Cosmos DB</title>
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
 </head>
@@ -18,10 +18,12 @@
 <nav class="sidebar">
   <h3>Getting Started</h3>
   <a href="index.html">Overview</a>
-  <h3>Modules</h3>
+  <h3>Vector Store</h3>
   <a href="vector-store.html">Vector Store</a>
   <a href="vector-store-autoconfigure.html" class="active">Auto-Configuration</a>
+  <h3>Chat Memory</h3>
   <a href="chat-memory.html">Chat Memory</a>
+  <a href="chat-memory-autoconfigure.html">Auto-Configuration</a>
 </nav>
 <main class="content">
 <h1>Azure Cosmos DB Vector Store Auto-Configuration</h1>
@@ -61,6 +63,54 @@ import org.springframework.beans.factory.annotation.Autowired;
 private VectorStore vectorStore;</code></pre>
 <div class="tip"><strong>💡 Tip:</strong> The auto-configuration will create the database and container if they don't exist.</div>
 
+<h2>Example Application</h2>
+<pre><code class="language-java">package com.example.demo;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.ai.document.Document;
+import org.springframework.ai.vectorstore.SearchRequest;
+import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Lazy;
+
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+@SpringBootApplication
+public class DemoApplication implements CommandLineRunner {
+
+    private static final Logger log = LoggerFactory.getLogger(DemoApplication.class);
+
+    @Lazy
+    @Autowired
+    private VectorStore vectorStore;
+
+    public static void main(String[] args) {
+        SpringApplication.run(DemoApplication.class, args);
+    }
+
+    @Override
+    public void run(String... args) throws Exception {
+        Document document1 = new Document(UUID.randomUUID().toString(),
+            "Sample content1", Map.of("key1", "value1"));
+        Document document2 = new Document(UUID.randomUUID().toString(),
+            "Sample content2", Map.of("key2", "value2"));
+
+        this.vectorStore.add(List.of(document1, document2));
+
+        List&lt;Document&gt; results = this.vectorStore.similaritySearch(
+            SearchRequest.builder().query("Sample content").topK(1).build());
+        log.info("Search results: {}", results);
+
+        this.vectorStore.delete(List.of(document1.getId(), document2.getId()));
+    }
+}</code></pre>
+
 <h2>Full Property Reference</h2>
 <table>
 <tr><th>Property</th><th>Description</th><th>Default</th></tr>
@@ -73,6 +123,10 @@ private VectorStore vectorStore;</code></pre>
 <tr><td><code>spring.ai.vectorstore.cosmosdb.vectorStoreThroughput</code></td><td>Container throughput (RU/s)</td><td><code>400</code></td></tr>
 <tr><td><code>spring.ai.vectorstore.cosmosdb.vectorDimensions</code></td><td>Vector dimensions</td><td><code>1536</code></td></tr>
 </table>
+
+<h2>Manual Configuration</h2>
+<p>If you prefer to configure the vector store manually (without auto-configuration), see the <a href="vector-store.html">Vector Store</a> page.</p>
+
 </main>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>

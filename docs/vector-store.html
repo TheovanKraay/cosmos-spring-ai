@@ -18,10 +18,12 @@
 <nav class="sidebar">
   <h3>Getting Started</h3>
   <a href="index.html">Overview</a>
-  <h3>Modules</h3>
+  <h3>Vector Store</h3>
   <a href="vector-store.html" class="active">Vector Store</a>
   <a href="vector-store-autoconfigure.html">Auto-Configuration</a>
+  <h3>Chat Memory</h3>
   <a href="chat-memory.html">Chat Memory</a>
+  <a href="chat-memory-autoconfigure.html">Auto-Configuration</a>
 </nav>
 <main class="content">
 <h1>Azure Cosmos DB Vector Store</h1>
@@ -40,81 +42,9 @@
 </ul>
 <div class="tip"><strong>💡 Note:</strong> In the context of Spring AI for Azure Cosmos DB, vector searches will create and leverage DiskANN indexes to ensure optimal performance for similarity queries.</div>
 
-<h2>Auto-Configuration Setup</h2>
-<p>The easiest way to use the Cosmos DB vector store is with Spring Boot auto-configuration.</p>
+<div class="tip"><strong>💡 Tip:</strong> For zero-config Spring Boot setup, see the <a href="vector-store-autoconfigure.html">Auto-Configuration</a> page.</div>
 
-<h3>Dependency</h3>
-<pre><code class="language-xml">&lt;dependency&gt;
-    &lt;groupId&gt;com.azure.spring.ai&lt;/groupId&gt;
-    &lt;artifactId&gt;spring-ai-autoconfigure-vector-store-azure-cosmos-db&lt;/artifactId&gt;
-    &lt;version&gt;1.0.0-SNAPSHOT&lt;/version&gt;
-&lt;/dependency&gt;</code></pre>
-
-<h3>Configuration Properties</h3>
-<table>
-<tr><th>Property</th><th>Description</th></tr>
-<tr><td><code>spring.ai.vectorstore.cosmosdb.databaseName</code></td><td>The name of the Cosmos DB database to use</td></tr>
-<tr><td><code>spring.ai.vectorstore.cosmosdb.containerName</code></td><td>The name of the Cosmos DB container to use</td></tr>
-<tr><td><code>spring.ai.vectorstore.cosmosdb.partitionKeyPath</code></td><td>The path for the partition key</td></tr>
-<tr><td><code>spring.ai.vectorstore.cosmosdb.metadataFields</code></td><td>Comma-separated list of metadata fields</td></tr>
-<tr><td><code>spring.ai.vectorstore.cosmosdb.vectorStoreThroughput</code></td><td>The throughput for the vector store</td></tr>
-<tr><td><code>spring.ai.vectorstore.cosmosdb.vectorDimensions</code></td><td>The number of dimensions for the vectors</td></tr>
-<tr><td><code>spring.ai.vectorstore.cosmosdb.endpoint</code></td><td>The endpoint for the Cosmos DB</td></tr>
-<tr><td><code>spring.ai.vectorstore.cosmosdb.key</code></td><td>The key for Cosmos DB (if absent, <a href="https://learn.microsoft.com/azure/developer/java/sdk/authentication/credential-chains#defaultazurecredential-overview">DefaultAzureCredential</a> is used)</td></tr>
-</table>
-
-<h3>Example with Auto-Configuration</h3>
-<pre><code class="language-java">package com.example.demo;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.ai.document.Document;
-import org.springframework.ai.vectorstore.SearchRequest;
-import org.springframework.ai.vectorstore.VectorStore;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Lazy;
-
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-@SpringBootApplication
-public class DemoApplication implements CommandLineRunner {
-
-    private static final Logger log = LoggerFactory.getLogger(DemoApplication.class);
-
-    @Lazy
-    @Autowired
-    private VectorStore vectorStore;
-
-    public static void main(String[] args) {
-        SpringApplication.run(DemoApplication.class, args);
-    }
-
-    @Override
-    public void run(String... args) throws Exception {
-        Document document1 = new Document(UUID.randomUUID().toString(),
-            "Sample content1", Map.of("key1", "value1"));
-        Document document2 = new Document(UUID.randomUUID().toString(),
-            "Sample content2", Map.of("key2", "value2"));
-
-        this.vectorStore.add(List.of(document1, document2));
-
-        List&lt;Document&gt; results = this.vectorStore.similaritySearch(
-            SearchRequest.builder().query("Sample content").topK(1).build());
-        log.info("Search results: {}", results);
-
-        this.vectorStore.delete(List.of(document1.getId(), document2.getId()));
-    }
-}</code></pre>
-
-<h2>Manual Configuration</h2>
-<p>If you prefer not to use auto-configuration, you can configure the vector store manually.</p>
-
-<h3>Dependency</h3>
+<h2>Dependency</h2>
 <pre><code class="language-xml">&lt;dependency&gt;
     &lt;groupId&gt;com.azure.spring.ai&lt;/groupId&gt;
     &lt;artifactId&gt;spring-ai-azure-cosmos-db-store&lt;/artifactId&gt;

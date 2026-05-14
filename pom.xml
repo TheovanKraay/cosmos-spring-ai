@@ -20,5 +20,6 @@
         <module>spring-ai-azure-cosmos-db-store</module>
         <module>spring-ai-autoconfigure-vector-store-azure-cosmos-db</module>
         <module>spring-ai-model-chat-memory-repository-cosmos-db</module>
+        <module>spring-ai-autoconfigure-model-chat-memory-repository-cosmos-db</module>
     </modules>
 </project>

@@ -7,8 +7,9 @@ Community-maintained Spring AI integrations for Azure Cosmos DB.
 | Module | Artifact ID | Description |
 |--------|-------------|-------------|
 | [Vector Store](docs/vector-store.md) | `spring-ai-azure-cosmos-db-store` | Vector Store implementation using DiskANN |
-| [Vector Store Auto-Configuration](docs/vector-store-autoconfigure.md) | `spring-ai-autoconfigure-vector-store-azure-cosmos-db` | Spring Boot auto-configuration for the vector store |
+| Vector Store Auto-Configuration | `spring-ai-autoconfigure-vector-store-azure-cosmos-db` | Spring Boot auto-configuration for the vector store (see [Vector Store](docs/vector-store.md)) |
 | [Chat Memory Repository](docs/chat-memory.md) | `spring-ai-model-chat-memory-repository-cosmos-db` | Chat Memory Repository for conversation persistence |
+| [Chat Memory Auto-Configuration](docs/chat-memory-autoconfigure.html) | `spring-ai-autoconfigure-model-chat-memory-repository-cosmos-db` | Spring Boot auto-configuration for chat memory |
 
 ## Maven Coordinates
 
@@ -32,6 +33,14 @@ Community-maintained Spring AI integrations for Azure Cosmos DB.
 <dependency>
     <groupId>com.azure.spring.ai</groupId>
     <artifactId>spring-ai-model-chat-memory-repository-cosmos-db</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+</dependency>
+```
+
+```xml
+<dependency>
+    <groupId>com.azure.spring.ai</groupId>
+    <artifactId>spring-ai-autoconfigure-model-chat-memory-repository-cosmos-db</artifactId>
     <version>1.0.0-SNAPSHOT</version>
 </dependency>
 ```
@@ -87,6 +96,7 @@ These modules were previously part of the [Spring AI](https://github.com/spring-
 | `org.springframework.ai.vectorstore.cosmosdb` | `com.azure.spring.ai.vectorstore.cosmosdb` |
 | `org.springframework.ai.vectorstore.cosmosdb.autoconfigure` | `com.azure.spring.ai.vectorstore.cosmosdb.autoconfigure` |
 | `org.springframework.ai.chat.memory.repository.cosmosdb` | `com.azure.spring.ai.chat.memory.repository.cosmosdb` |
+| `org.springframework.ai.model.chat.memory.repository.cosmosdb.autoconfigure` | `com.azure.spring.ai.model.chat.memory.repository.cosmosdb.autoconfigure` |
 
 ## License
 

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Auto-Configuration — Spring AI Cosmos DB</title>
+<title>Chat Memory Auto-Configuration — Spring AI Cosmos DB</title>
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
 </head>
@@ -20,61 +20,69 @@
   <a href="index.html">Overview</a>
   <h3>Vector Store</h3>
   <a href="vector-store.html">Vector Store</a>
-  <a href="vector-store-autoconfigure.html" class="active">Auto-Configuration</a>
+  <a href="vector-store-autoconfigure.html">Auto-Configuration</a>
   <h3>Chat Memory</h3>
   <a href="chat-memory.html">Chat Memory</a>
-  <a href="chat-memory-autoconfigure.html">Auto-Configuration</a>
+  <a href="chat-memory-autoconfigure.html" class="active">Auto-Configuration</a>
 </nav>
 <main class="content">
-<h1>Azure Cosmos DB Vector Store Auto-Configuration</h1>
-<p>Spring Boot auto-configuration for the Azure Cosmos DB Vector Store. This module provides zero-config setup when using Spring Boot.</p>
+<h1>Azure Cosmos DB Chat Memory Auto-Configuration</h1>
+<p>Spring Boot auto-configuration for the Azure Cosmos DB Chat Memory Repository. This module provides zero-config setup for persistent conversation storage when using Spring Boot.</p>
 
 <h2>Dependency</h2>
 <pre><code class="language-xml">&lt;dependency&gt;
     &lt;groupId&gt;com.azure.spring.ai&lt;/groupId&gt;
-    &lt;artifactId&gt;spring-ai-autoconfigure-vector-store-azure-cosmos-db&lt;/artifactId&gt;
+    &lt;artifactId&gt;spring-ai-autoconfigure-model-chat-memory-repository-cosmos-db&lt;/artifactId&gt;
     &lt;version&gt;1.0.0-SNAPSHOT&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
-<p>This transitively brings in the <code>spring-ai-azure-cosmos-db-store</code> module.</p>
+<p>This transitively brings in the <code>spring-ai-model-chat-memory-repository-cosmos-db</code> module.</p>
 
 <h2>Configuration Properties</h2>
 <p>Add these to your <code>application.properties</code> or <code>application.yml</code>:</p>
-<pre><code class="language-properties">spring.ai.vectorstore.cosmosdb.endpoint=https://your-account.documents.azure.com:443/
-spring.ai.vectorstore.cosmosdb.databaseName=my-database
-spring.ai.vectorstore.cosmosdb.containerName=my-vectors
-spring.ai.vectorstore.cosmosdb.metadataFields=country,year,city
-spring.ai.vectorstore.cosmosdb.vectorStoreThroughput=1000
-spring.ai.vectorstore.cosmosdb.vectorDimensions=1536
-spring.ai.vectorstore.cosmosdb.partitionKeyPath=/id</code></pre>
+<pre><code class="language-properties">spring.ai.chat.memory.repository.cosmosdb.endpoint=https://your-account.documents.azure.com:443/
+spring.ai.chat.memory.repository.cosmosdb.database-name=springai
+spring.ai.chat.memory.repository.cosmosdb.container-name=chat_memory
+spring.ai.chat.memory.repository.cosmosdb.connection-mode=gateway</code></pre>
 
 <h3>Authentication</h3>
 <p><strong>Key-based</strong> (set the <code>key</code> property):</p>
-<pre><code class="language-properties">spring.ai.vectorstore.cosmosdb.key=your-cosmos-db-key</code></pre>
+<pre><code class="language-properties">spring.ai.chat.memory.repository.cosmosdb.key=your-cosmos-db-key</code></pre>
 
 <p><strong>Azure Identity</strong> (recommended for production — omit the <code>key</code> property):</p>
 <p>When no key is provided, the auto-configuration uses <a href="https://learn.microsoft.com/azure/developer/java/sdk/authentication/credential-chains#defaultazurecredential-overview">DefaultAzureCredential</a> for authentication via managed identity, service principal, or other Azure credential sources.</p>
 
 <h2>Usage</h2>
-<p>Once configured, simply inject <code>VectorStore</code>:</p>
-<pre><code class="language-java">import org.springframework.ai.vectorstore.VectorStore;
+<p>Once configured, simply inject <code>ChatMemoryRepository</code>:</p>
+<pre><code class="language-java">import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Autowired
-private VectorStore vectorStore;</code></pre>
-<div class="tip"><strong>💡 Tip:</strong> The auto-configuration will create the database and container if they don't exist.</div>
+private ChatMemoryRepository chatMemoryRepository;</code></pre>
+<div class="tip"><strong>💡 Tip:</strong> The auto-configuration will create the database and container if they don't exist. It also registers before Spring AI's default <code>ChatMemoryAutoConfiguration</code> so the Cosmos DB repository takes precedence.</div>
+
+<h2>Auto-Configured Beans</h2>
+<p>The following beans are auto-configured (all <code>@ConditionalOnMissingBean</code>, so you can override any of them):</p>
+<table>
+<tr><th>Bean</th><th>Description</th></tr>
+<tr><td><code>CosmosAsyncClient</code></td><td>Cosmos DB async client (created when <code>endpoint</code> property is set)</td></tr>
+<tr><td><code>CosmosDBChatMemoryRepositoryConfig</code></td><td>Container configuration (database, container, partition key)</td></tr>
+<tr><td><code>CosmosDBChatMemoryRepository</code></td><td>The <code>ChatMemoryRepository</code> implementation</td></tr>
+</table>
 
 <h2>Full Property Reference</h2>
 <table>
 <tr><th>Property</th><th>Description</th><th>Default</th></tr>
-<tr><td><code>spring.ai.vectorstore.cosmosdb.endpoint</code></td><td>Cosmos DB endpoint URI</td><td>(required)</td></tr>
-<tr><td><code>spring.ai.vectorstore.cosmosdb.key</code></td><td>Primary or secondary key</td><td>(uses DefaultAzureCredential if absent)</td></tr>
-<tr><td><code>spring.ai.vectorstore.cosmosdb.databaseName</code></td><td>Database name</td><td>(required)</td></tr>
-<tr><td><code>spring.ai.vectorstore.cosmosdb.containerName</code></td><td>Container name</td><td>(required)</td></tr>
-<tr><td><code>spring.ai.vectorstore.cosmosdb.partitionKeyPath</code></td><td>Partition key path</td><td><code>/id</code></td></tr>
-<tr><td><code>spring.ai.vectorstore.cosmosdb.metadataFields</code></td><td>Metadata fields for filtering</td><td>(empty)</td></tr>
-<tr><td><code>spring.ai.vectorstore.cosmosdb.vectorStoreThroughput</code></td><td>Container throughput (RU/s)</td><td><code>400</code></td></tr>
-<tr><td><code>spring.ai.vectorstore.cosmosdb.vectorDimensions</code></td><td>Vector dimensions</td><td><code>1536</code></td></tr>
+<tr><td><code>spring.ai.chat.memory.repository.cosmosdb.endpoint</code></td><td>Azure Cosmos DB endpoint URI</td><td>(required)</td></tr>
+<tr><td><code>spring.ai.chat.memory.repository.cosmosdb.key</code></td><td>Primary or secondary key</td><td>(uses DefaultAzureCredential if absent)</td></tr>
+<tr><td><code>spring.ai.chat.memory.repository.cosmosdb.connection-mode</code></td><td>Connection mode (<code>gateway</code> or <code>direct</code>)</td><td><code>gateway</code></td></tr>
+<tr><td><code>spring.ai.chat.memory.repository.cosmosdb.database-name</code></td><td>Database name</td><td><code>springai</code></td></tr>
+<tr><td><code>spring.ai.chat.memory.repository.cosmosdb.container-name</code></td><td>Container name</td><td><code>chat_memory</code></td></tr>
+<tr><td><code>spring.ai.chat.memory.repository.cosmosdb.partition-key-path</code></td><td>Partition key path</td><td><code>/conversationId</code></td></tr>
 </table>
+
+<h2>Manual Configuration</h2>
+<p>If you prefer to configure the chat memory repository manually (without auto-configuration), see the <a href="chat-memory.html">Chat Memory</a> page.</p>
+
 </main>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>

@@ -27,6 +27,13 @@
     <description>Spring AI Auto Configuration for CosmosDB Chat Memory Repository</description>
     <url>https://github.com/AzureCosmosDB/spring-ai</url>
 
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0</url>
+        </license>
+    </licenses>
+
     <properties>
         <java.version>17</java.version>
         <maven.compiler.source>17</maven.compiler.source>
@@ -37,6 +44,7 @@
         <spring-ai-cosmos-chat-memory.version>1.0.0-SNAPSHOT</spring-ai-cosmos-chat-memory.version>
         <azure-cosmos.version>5.22.0</azure-cosmos.version>
         <azure-identity.version>1.18.2</azure-identity.version>
+        <jspecify.version>1.0.0</jspecify.version>
     </properties>
 
     <dependencyManagement>
@@ -113,6 +121,12 @@
             <groupId>com.azure</groupId>
             <artifactId>azure-identity</artifactId>
             <version>${azure-identity.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jspecify</groupId>
+            <artifactId>jspecify</artifactId>
+            <version>${jspecify.version}</version>
         </dependency>
 
         <dependency>

@@ -6,8 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 This changelog covers **only the `spring-ai-azure-cosmos-db-store` module**.
 Sibling modules (`spring-ai-autoconfigure-vector-store-azure-cosmos-db`,
-`spring-ai-model-chat-memory-repository-cosmos-db`) maintain their own
-changelogs.
+`spring-ai-model-chat-memory-repository-cosmos-db`,
+`spring-ai-autoconfigure-model-chat-memory-repository-cosmos-db`) maintain
+their own changelogs.
 
 ## [Unreleased]
 

@@ -11,10 +11,12 @@ on:
       - 'spring-ai-azure-cosmos-db-store-v[0-9]*.[0-9]*.[0-9]*'
       - 'spring-ai-autoconfigure-vector-store-azure-cosmos-db-v[0-9]*.[0-9]*.[0-9]*'
       - 'spring-ai-model-chat-memory-repository-cosmos-db-v[0-9]*.[0-9]*.[0-9]*'
+      - 'spring-ai-autoconfigure-model-chat-memory-repository-cosmos-db-v[0-9]*.[0-9]*.[0-9]*'
       # Beta:   <module>-vMAJOR.MINOR.PATCH-beta.N
       - 'spring-ai-azure-cosmos-db-store-v[0-9]*.[0-9]*.[0-9]*-beta.[0-9]*'
       - 'spring-ai-autoconfigure-vector-store-azure-cosmos-db-v[0-9]*.[0-9]*.[0-9]*-beta.[0-9]*'
       - 'spring-ai-model-chat-memory-repository-cosmos-db-v[0-9]*.[0-9]*.[0-9]*-beta.[0-9]*'
+      - 'spring-ai-autoconfigure-model-chat-memory-repository-cosmos-db-v[0-9]*.[0-9]*.[0-9]*-beta.[0-9]*'
   workflow_dispatch:
     inputs:
       tag:
@@ -64,6 +66,7 @@ jobs:
             "spring-ai-azure-cosmos-db-store"
             "spring-ai-autoconfigure-vector-store-azure-cosmos-db"
             "spring-ai-model-chat-memory-repository-cosmos-db"
+            "spring-ai-autoconfigure-model-chat-memory-repository-cosmos-db"
           )
 
           MODULE=""

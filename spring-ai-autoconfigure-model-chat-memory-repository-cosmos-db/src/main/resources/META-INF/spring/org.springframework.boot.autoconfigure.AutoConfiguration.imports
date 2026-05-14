@@ -1,0 +1,1 @@
+com.azure.spring.ai.model.chat.memory.repository.cosmosdb.autoconfigure.CosmosDBChatMemoryRepositoryAutoConfiguration

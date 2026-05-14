@@ -24,3 +24,4 @@
 /spring-ai-azure-cosmos-db-store/                       @kushagraThapar @TheovanKraay @aayush3011 @jeet1995
 /spring-ai-autoconfigure-vector-store-azure-cosmos-db/  @kushagraThapar @TheovanKraay @aayush3011 @jeet1995
 /spring-ai-model-chat-memory-repository-cosmos-db/      @kushagraThapar @TheovanKraay @aayush3011 @jeet1995
+/spring-ai-autoconfigure-model-chat-memory-repository-cosmos-db/ @kushagraThapar @TheovanKraay @aayush3011 @jeet1995

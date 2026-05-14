@@ -9,6 +9,7 @@ VALID_MODULES=(
     "spring-ai-azure-cosmos-db-store"
     "spring-ai-autoconfigure-vector-store-azure-cosmos-db"
     "spring-ai-model-chat-memory-repository-cosmos-db"
+    "spring-ai-autoconfigure-model-chat-memory-repository-cosmos-db"
 )
 
 # Extract the project's own <version> from a module's pom.xml.
@@ -72,18 +73,30 @@ for MODULE in "${VALID_MODULES[@]}"; do
     printf "%-55s %-20s %s\n" "$MODULE" "$VERSION" "$TAG_HINT"
 done
 
-# Inter-module dependency property
-AUTOCONF_POM="$REPO_ROOT/spring-ai-autoconfigure-vector-store-azure-cosmos-db/pom.xml"
-if [[ -f "$AUTOCONF_POM" ]]; then
-    STORE_DEP=$(read_property "$AUTOCONF_POM" "spring-ai-cosmos-db-store.version")
-    echo ""
-    echo "=== Inter-module dependency (autoconfigure → store) ==="
+# Inter-module dependency properties (autoconfigure → core)
+echo ""
+echo "=== Inter-module dependencies (autoconfigure → core) ==="
+
+VECTOR_AUTOCONF_POM="$REPO_ROOT/spring-ai-autoconfigure-vector-store-azure-cosmos-db/pom.xml"
+if [[ -f "$VECTOR_AUTOCONF_POM" ]]; then
+    STORE_DEP=$(read_property "$VECTOR_AUTOCONF_POM" "spring-ai-cosmos-db-store.version")
     echo "  spring-ai-autoconfigure-vector-store-azure-cosmos-db expects"
-    echo "  spring-ai-azure-cosmos-db-store version: ${STORE_DEP:-NOT FOUND}"
+    echo "    spring-ai-azure-cosmos-db-store version: ${STORE_DEP:-NOT FOUND}"
+fi
+
+CHAT_AUTOCONF_POM="$REPO_ROOT/spring-ai-autoconfigure-model-chat-memory-repository-cosmos-db/pom.xml"
+if [[ -f "$CHAT_AUTOCONF_POM" ]]; then
+    CHAT_DEP=$(read_property "$CHAT_AUTOCONF_POM" "spring-ai-cosmos-chat-memory.version")
+    echo "  spring-ai-autoconfigure-model-chat-memory-repository-cosmos-db expects"
+    echo "    spring-ai-model-chat-memory-repository-cosmos-db version: ${CHAT_DEP:-NOT FOUND}"
 fi
 
 echo ""
 echo "=== Dependency / release order ==="
-echo "  1. spring-ai-azure-cosmos-db-store               ← release FIRST if autoconfigure is in the wave"
-echo "  2. spring-ai-autoconfigure-vector-store-azure-cosmos-db"
-echo "  3. spring-ai-model-chat-memory-repository-cosmos-db   ← independent, release any time"
+echo "  Vector-store pair (release in order if both in wave):"
+echo "    1. spring-ai-azure-cosmos-db-store"
+echo "    2. spring-ai-autoconfigure-vector-store-azure-cosmos-db"
+echo "  Chat-memory pair (release in order if both in wave):"
+echo "    1. spring-ai-model-chat-memory-repository-cosmos-db"
+echo "    2. spring-ai-autoconfigure-model-chat-memory-repository-cosmos-db"
+echo "  Cross-pair ordering does not matter."

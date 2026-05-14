@@ -53,6 +53,7 @@ VALID_MODULES=(
     "spring-ai-azure-cosmos-db-store"
     "spring-ai-autoconfigure-vector-store-azure-cosmos-db"
     "spring-ai-model-chat-memory-repository-cosmos-db"
+    "spring-ai-autoconfigure-model-chat-memory-repository-cosmos-db"
 )
 
 is_valid_module() {
@@ -246,17 +247,31 @@ case "$PHASE" in
             fail "CHANGELOG.md not found at $CHANGELOG"
         fi
 
-        # Autoconfigure-specific: store dep property must be a release version.
-        if [[ "$MODULE" == "spring-ai-autoconfigure-vector-store-azure-cosmos-db" ]]; then
-            STORE_DEP=$(read_property "$POM" "spring-ai-cosmos-db-store.version")
-            if [[ -z "$STORE_DEP" ]]; then
-                fail "<spring-ai-cosmos-db-store.version> property not found in $MODULE/pom.xml"
-            elif [[ "$STORE_DEP" == *"-SNAPSHOT" ]]; then
-                fail "Autoconfigure pins store at SNAPSHOT ($STORE_DEP). Bump <spring-ai-cosmos-db-store.version> to a released version of spring-ai-azure-cosmos-db-store before tagging."
-            elif [[ ! "$STORE_DEP" =~ $SEMVER_REGEX ]]; then
-                fail "<spring-ai-cosmos-db-store.version> ($STORE_DEP) is not a valid release version (X.Y.Z[-beta.N])"
+        # Autoconfigure-specific: inter-module version property must be a
+        # release version (non-SNAPSHOT, valid semver). Two autoconfigure
+        # modules, each pinning a different core via a different property.
+        AUTOCONF_PROP=""
+        AUTOCONF_CORE=""
+        case "$MODULE" in
+            spring-ai-autoconfigure-vector-store-azure-cosmos-db)
+                AUTOCONF_PROP="spring-ai-cosmos-db-store.version"
+                AUTOCONF_CORE="spring-ai-azure-cosmos-db-store"
+                ;;
+            spring-ai-autoconfigure-model-chat-memory-repository-cosmos-db)
+                AUTOCONF_PROP="spring-ai-cosmos-chat-memory.version"
+                AUTOCONF_CORE="spring-ai-model-chat-memory-repository-cosmos-db"
+                ;;
+        esac
+        if [[ -n "$AUTOCONF_PROP" ]]; then
+            CORE_DEP=$(read_property "$POM" "$AUTOCONF_PROP")
+            if [[ -z "$CORE_DEP" ]]; then
+                fail "<$AUTOCONF_PROP> property not found in $MODULE/pom.xml"
+            elif [[ "$CORE_DEP" == *"-SNAPSHOT" ]]; then
+                fail "Autoconfigure pins $AUTOCONF_CORE at SNAPSHOT ($CORE_DEP). Bump <$AUTOCONF_PROP> to a released version of $AUTOCONF_CORE before tagging."
+            elif [[ ! "$CORE_DEP" =~ $SEMVER_REGEX ]]; then
+                fail "<$AUTOCONF_PROP> ($CORE_DEP) is not a valid release version (X.Y.Z[-beta.N])"
             else
-                pass "Autoconfigure pins store at released version $STORE_DEP"
+                pass "Autoconfigure pins $AUTOCONF_CORE at released version $CORE_DEP"
             fi
         fi
 

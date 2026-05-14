@@ -14,8 +14,10 @@ arguments:
     description: >
       Module to release. One of: spring-ai-azure-cosmos-db-store,
       spring-ai-autoconfigure-vector-store-azure-cosmos-db,
-      spring-ai-model-chat-memory-repository-cosmos-db. For a multi-module
-      wave, specify the first module here and supply the others when prompted.
+      spring-ai-model-chat-memory-repository-cosmos-db,
+      spring-ai-autoconfigure-model-chat-memory-repository-cosmos-db. For a
+      multi-module wave, specify the first module here and supply the others
+      when prompted.
   version:
     type: string
     required: true
@@ -33,6 +35,7 @@ argument-hints:
     - spring-ai-azure-cosmos-db-store
     - spring-ai-autoconfigure-vector-store-azure-cosmos-db
     - spring-ai-model-chat-memory-repository-cosmos-db
+    - spring-ai-autoconfigure-model-chat-memory-repository-cosmos-db
   version:
     - 1.0.0-beta.1
     - 1.0.0
@@ -77,18 +80,25 @@ SKILL.md file), not the repository root.
 | `spring-ai-azure-cosmos-db-store` | none |
 | `spring-ai-autoconfigure-vector-store-azure-cosmos-db` | depends on `spring-ai-azure-cosmos-db-store` via the `<spring-ai-cosmos-db-store.version>` property in its own `pom.xml` |
 | `spring-ai-model-chat-memory-repository-cosmos-db` | none |
+| `spring-ai-autoconfigure-model-chat-memory-repository-cosmos-db` | depends on `spring-ai-model-chat-memory-repository-cosmos-db` via the `<spring-ai-cosmos-chat-memory.version>` property in its own `pom.xml` |
 
 **Release ordering rules:**
 
-1. If both `spring-ai-azure-cosmos-db-store` and `spring-ai-autoconfigure-vector-store-azure-cosmos-db`
-   are in the same release wave, `spring-ai-azure-cosmos-db-store` is tagged
-   first. The release PR must update autoconfigure's
-   `<spring-ai-cosmos-db-store.version>` property to the **same** released
-   version of `spring-ai-azure-cosmos-db-store`.
-2. The release pipeline blocks any artifact whose runtime classpath contains
-   a `com.azure.spring.ai:*-SNAPSHOT` dependency, so step 1 is non-negotiable.
-3. `spring-ai-model-chat-memory-repository-cosmos-db` is independent and may
-   be released alone or alongside the others.
+There are two **core → autoconfigure** pairs. Within each pair, if both
+members are in the same release wave, the core module must be tagged first
+and the autoconfigure module's release PR must update its inter-module
+version property to the **same** released version of the core:
+
+| Core (release first) | Autoconfigure (release second) | Property to bump |
+|---|---|---|
+| `spring-ai-azure-cosmos-db-store` | `spring-ai-autoconfigure-vector-store-azure-cosmos-db` | `<spring-ai-cosmos-db-store.version>` |
+| `spring-ai-model-chat-memory-repository-cosmos-db` | `spring-ai-autoconfigure-model-chat-memory-repository-cosmos-db` | `<spring-ai-cosmos-chat-memory.version>` |
+
+The release pipeline blocks any artifact whose runtime classpath contains
+a `com.azure.spring.ai:*-SNAPSHOT` dependency, so this ordering is
+non-negotiable. Cross-pair ordering doesn't matter; a core module released
+without its autoconfigure (or vice-versa, when the property already pins
+a non-SNAPSHOT released core) may be released alone.
 
 ## Workflow
 
@@ -140,14 +150,15 @@ For each module being released:
 1. **Bump POM `<version>`** in `<MODULE>/pom.xml` — strip `-SNAPSHOT`
    (e.g. `1.0.0-SNAPSHOT` → `1.0.0`). The aggregator root `pom.xml` is NOT
    a parent and is not edited.
-2. **For `spring-ai-autoconfigure-vector-store-azure-cosmos-db` only:** if
-   `spring-ai-azure-cosmos-db-store` is also being released in this wave,
-   update `<spring-ai-cosmos-db-store.version>` in
-   `spring-ai-autoconfigure-vector-store-azure-cosmos-db/pom.xml` to the
-   wave's release version of `spring-ai-azure-cosmos-db-store`. If
-   `spring-ai-azure-cosmos-db-store` is **not** in this wave, the property
-   must already point at a previously released non-SNAPSHOT version — check
-   and abort if it doesn't.
+2. **For autoconfigure modules** (either
+   `spring-ai-autoconfigure-vector-store-azure-cosmos-db` or
+   `spring-ai-autoconfigure-model-chat-memory-repository-cosmos-db`): if
+   the matching core module is also being released in this wave, update
+   the inter-module version property in the autoconfigure module's
+   `pom.xml` to the wave's release version of the core (per the pairs
+   table above). If the core is **not** in this wave, the property must
+   already point at a previously released non-SNAPSHOT version — check and
+   abort if it doesn't.
 3. **Update `<MODULE>/CHANGELOG.md`:**
    - Locate `## [Unreleased]`.
    - Replace with `## [<VERSION>] — <DATE>` (provided date or today).
@@ -195,9 +206,8 @@ git checkout main && git pull origin main
 ```
 
 Run tag-phase validation, then create the tag for the **first** module in
-dependency order (always
-`spring-ai-azure-cosmos-db-store` first when included; otherwise the order
-between the other two doesn't matter):
+dependency order (within each core → autoconfigure pair, the core module
+goes first when both are in the wave; cross-pair ordering doesn't matter):
 
 ```bash
 <THIS_SKILL_DIRECTORY>/scripts/validate-release.sh \
@@ -228,12 +238,14 @@ Report the workflow URL and remind the user:
 > The publish job pauses on the **production** environment for manual
 > approval. Go to **Actions → Release → (your run) → Review deployments → Approve**.
 
-For multi-module waves with the autoconfigure dep, **wait for the
-`spring-ai-azure-cosmos-db-store` workflow to complete (and the GitHub
-Release to exist) before tagging
-`spring-ai-autoconfigure-vector-store-azure-cosmos-db`**. The autoconfigure
-release will fail otherwise — its pinned store dep would not yet be
-resolvable as a release artifact.
+For multi-module waves that include a core → autoconfigure pair, **wait
+for the core module's workflow to complete (and the GitHub Release to
+exist) before tagging the matching autoconfigure module**. The
+autoconfigure release will fail otherwise — its pinned core dep would not
+yet be resolvable as a release artifact. This applies to both pairs:
+
+- `spring-ai-azure-cosmos-db-store` → `spring-ai-autoconfigure-vector-store-azure-cosmos-db`
+- `spring-ai-model-chat-memory-repository-cosmos-db` → `spring-ai-autoconfigure-model-chat-memory-repository-cosmos-db`
 
 Then tag the next module and repeat.
 
@@ -249,9 +261,12 @@ Ask the user for the next dev version per module. Common defaults:
 - After a beta `X.Y.Z-beta.N` → `X.Y.Z-beta.(N+1)-SNAPSHOT` or
   `X.Y.Z-SNAPSHOT` (depends on whether more betas are planned)
 
-Also bump `<spring-ai-cosmos-db-store.version>` in autoconfigure's
-`pom.xml` back to the next SNAPSHOT of the store, so the reactor build
-resolves the store from source again during ongoing development.
+For each core module released in this wave, bump the matching autoconfigure
+module's inter-module version property
+(`<spring-ai-cosmos-db-store.version>` for the vector-store pair,
+`<spring-ai-cosmos-chat-memory.version>` for the chat-memory pair) back to
+the next SNAPSHOT of the core, so the reactor build resolves the core from
+source again during ongoing development.
 
 Open the PR and stop. The user merges it.
 
@@ -288,10 +303,13 @@ membership, etc.).
 - **Never skip phase validation.** Each phase has a dedicated check set.
 - **Always show diffs** before committing version + changelog changes.
 - **Always ask for explicit confirmation** before pushing a tag.
-- **Respect dependency order.** `spring-ai-azure-cosmos-db-store` must be
-  tagged (and have a successful release run) before
-  `spring-ai-autoconfigure-vector-store-azure-cosmos-db` when both are in
-  the same wave.
+- **Respect dependency order.** Within each core → autoconfigure pair, the
+  core module must be tagged (and have a successful release run) before
+  the matching autoconfigure module when both are in the same wave. The
+  pairs are: `spring-ai-azure-cosmos-db-store` →
+  `spring-ai-autoconfigure-vector-store-azure-cosmos-db`, and
+  `spring-ai-model-chat-memory-repository-cosmos-db` →
+  `spring-ai-autoconfigure-model-chat-memory-repository-cosmos-db`.
 - **One tag at a time.** `git push origin <tag>` per tag — never combine.
 - **Always open a post-release SNAPSHOT bump PR** so `main` doesn't keep
   claiming the just-released version as the dev version.

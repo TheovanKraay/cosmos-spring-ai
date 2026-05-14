@@ -33,12 +33,18 @@ If `ACTUAL != EXPECTED`, the job fails. Causes and fixes:
 
 ### "Reject internal SNAPSHOT dependencies" in the publish job
 
-`spring-ai-autoconfigure-vector-store-azure-cosmos-db` was tagged while
-`<spring-ai-cosmos-db-store.version>` in its `pom.xml` was still a SNAPSHOT.
+An autoconfigure module was tagged while its inter-module version property
+in `pom.xml` was still a SNAPSHOT. The two failure modes are:
 
-Fix:
+- `spring-ai-autoconfigure-vector-store-azure-cosmos-db` with
+  `<spring-ai-cosmos-db-store.version>` set to a SNAPSHOT.
+- `spring-ai-autoconfigure-model-chat-memory-repository-cosmos-db` with
+  `<spring-ai-cosmos-chat-memory.version>` set to a SNAPSHOT.
 
-1. Open a follow-up PR that bumps the property to the released store
+Fix (vector-store autoconfigure shown; same procedure applies to
+chat-memory autoconfigure with its corresponding property and module name):
+
+1. Open a follow-up PR that bumps the property to the released core
    version (`X.Y.Z` or `X.Y.Z-beta.N`).
 2. Merge.
 3. Delete the failed tag, re-tag from the new merge commit:
@@ -130,6 +136,7 @@ Where `<module>` is exactly one of:
 - `spring-ai-azure-cosmos-db-store`
 - `spring-ai-autoconfigure-vector-store-azure-cosmos-db`
 - `spring-ai-model-chat-memory-repository-cosmos-db`
+- `spring-ai-autoconfigure-model-chat-memory-repository-cosmos-db`
 
 The workflow uses an explicit per-module allowlist (not a wildcard); any
 tag outside this grammar is silently ignored. The `parse-tag` job validates
@@ -154,30 +161,36 @@ The `validate-release.sh` script reads the same value with a portable
 awk-based parser for fast offline validation. The two approaches are
 required to agree before a release can succeed.
 
-## Why "tag store first, then autoconfigure"?
+## Why "tag core first, then autoconfigure"?
 
-`spring-ai-autoconfigure-vector-store-azure-cosmos-db` declares a
-dependency on `spring-ai-azure-cosmos-db-store` via the
-`<spring-ai-cosmos-db-store.version>` property. The release workflow
-**rejects** any artifact whose runtime classpath contains a
-`com.azure.spring.ai:*-SNAPSHOT` dependency.
+There are two **core → autoconfigure** pairs:
 
-If the store hasn't been released yet, the autoconfigure release will
+| Core | Autoconfigure | Inter-module property |
+|---|---|---|
+| `spring-ai-azure-cosmos-db-store` | `spring-ai-autoconfigure-vector-store-azure-cosmos-db` | `<spring-ai-cosmos-db-store.version>` |
+| `spring-ai-model-chat-memory-repository-cosmos-db` | `spring-ai-autoconfigure-model-chat-memory-repository-cosmos-db` | `<spring-ai-cosmos-chat-memory.version>` |
+
+Each autoconfigure module declares a dependency on its matching core via
+the property listed above. The release workflow **rejects** any artifact
+whose runtime classpath contains a `com.azure.spring.ai:*-SNAPSHOT`
+dependency.
+
+If the core hasn't been released yet, the autoconfigure release will
 either:
 
 - pin a SNAPSHOT (rejected by the workflow), or
 - pin a non-existent version (Maven will fail to resolve in CI).
 
-So the wave PR must:
+So a wave PR that includes both members of a pair must:
 
-1. Bump store's `pom.xml <version>` to the release version.
-2. Bump autoconfigure's `pom.xml <version>` to its release version.
-3. Bump autoconfigure's `<spring-ai-cosmos-db-store.version>` property to
-   the same store release version as (1).
+1. Bump the core's `pom.xml <version>` to the release version.
+2. Bump the autoconfigure's `pom.xml <version>` to its release version.
+3. Bump the autoconfigure's inter-module property to the same core release
+   version as (1).
 
-After merge, the agent tags store first, waits for the store's GitHub
-Release run to complete, then tags autoconfigure. The autoconfigure run
-verifies the dep is resolvable as a release.
+After merge, the agent tags the core first, waits for the core's GitHub
+Release run to complete, then tags the autoconfigure. The autoconfigure
+run verifies the dep is resolvable as a release.
 
 ## Azure Partner Release Pipeline (Maven Central — future)
 

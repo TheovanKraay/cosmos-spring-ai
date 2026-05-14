@@ -7,7 +7,7 @@ Community-maintained Spring AI integrations for Azure Cosmos DB.
 | Module | Artifact ID | Description |
 |--------|-------------|-------------|
 | [Vector Store](docs/vector-store.md) | `spring-ai-azure-cosmos-db-store` | Vector Store implementation using DiskANN |
-| Vector Store Auto-Configuration | `spring-ai-autoconfigure-vector-store-azure-cosmos-db` | Spring Boot auto-configuration for the vector store (see [Vector Store](docs/vector-store.md)) |
+| Vector Store Auto-Configuration | `spring-ai-autoconfigure-vector-store-azure-cosmos-db` | Spring Boot auto-configuration for the vector store (see [Auto-Configuration](docs/vector-store-autoconfigure.html)) |
 | [Chat Memory Repository](docs/chat-memory.md) | `spring-ai-model-chat-memory-repository-cosmos-db` | Chat Memory Repository for conversation persistence |
 | [Chat Memory Auto-Configuration](docs/chat-memory-autoconfigure.html) | `spring-ai-autoconfigure-model-chat-memory-repository-cosmos-db` | Spring Boot auto-configuration for chat memory |
 

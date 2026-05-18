@@ -1,0 +1,27 @@
+# CODEOWNERS for AzureCosmosDB/spring-ai
+#
+# Owners listed here are automatically requested for review on PRs that
+# touch matching paths. The last matching pattern wins, so more-specific
+# rules below override the global default.
+#
+# Required reading: https://docs.github.com/en/repositories/managing-your-repositories-settings-and-security/customizing-your-repository/about-code-owners
+
+# Default owners for everything in the repo.
+*                                                       @kushagraThapar @TheovanKraay @aayush3011 @jeet1995
+
+# GitHub configuration (workflows, agents, skills, prompts, this file).
+/.github/                                               @kushagraThapar @TheovanKraay @aayush3011 @jeet1995
+
+# Release pipeline + release tooling — extra-careful review here.
+/.github/workflows/release.yml                          @kushagraThapar @TheovanKraay @aayush3011 @jeet1995
+/.github/agents/release.agent.md                        @kushagraThapar @TheovanKraay @aayush3011 @jeet1995
+/.github/prompts/release.prompt.md                      @kushagraThapar @TheovanKraay @aayush3011 @jeet1995
+/.github/skills/release/                                @kushagraThapar @TheovanKraay @aayush3011 @jeet1995
+/docs/release-instructions.md                           @kushagraThapar @TheovanKraay @aayush3011 @jeet1995
+
+# Per-module ownership (all currently shared; refine here if module-specific
+# owners diverge in the future).
+/spring-ai-azure-cosmos-db-store/                       @kushagraThapar @TheovanKraay @aayush3011 @jeet1995
+/spring-ai-autoconfigure-vector-store-azure-cosmos-db/  @kushagraThapar @TheovanKraay @aayush3011 @jeet1995
+/spring-ai-model-chat-memory-repository-cosmos-db/      @kushagraThapar @TheovanKraay @aayush3011 @jeet1995
+/spring-ai-autoconfigure-model-chat-memory-repository-cosmos-db/ @kushagraThapar @TheovanKraay @aayush3011 @jeet1995

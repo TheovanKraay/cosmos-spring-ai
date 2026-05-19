@@ -21,13 +21,14 @@ root.
 | Module | Artifact ID | Description |
 |--------|-------------|-------------|
 | Vector Store | `spring-ai-azure-cosmos-db-store` | Spring AI vector store backed by Azure Cosmos DB |
-| Autoconfigure | `spring-ai-autoconfigure-vector-store-azure-cosmos-db` | Spring Boot autoconfiguration for the vector store |
+| Vector Store Autoconfigure | `spring-ai-autoconfigure-vector-store-azure-cosmos-db` | Spring Boot autoconfiguration for the vector store |
 | Chat Memory | `spring-ai-model-chat-memory-repository-cosmos-db` | Spring AI chat memory repository backed by Azure Cosmos DB |
+| Chat Memory Autoconfigure | `spring-ai-autoconfigure-model-chat-memory-repository-cosmos-db` | Spring Boot autoconfiguration for the chat memory repository |
 
 ### Dependency order
 
 ```
-spring-ai-azure-cosmos-db-store              ← release FIRST if autoconfigure
+spring-ai-azure-cosmos-db-store              ← release FIRST if its autoconfigure
         ↑                                      is in the wave
         │
         └── spring-ai-autoconfigure-vector-store-azure-cosmos-db
@@ -36,32 +37,44 @@ spring-ai-azure-cosmos-db-store              ← release FIRST if autoconfigure
                                               property in autoconfigure's
                                               own pom.xml
 
-spring-ai-model-chat-memory-repository-cosmos-db
-                                            ← independent, release any time
+spring-ai-model-chat-memory-repository-cosmos-db   ← release FIRST if its autoconfigure
+        ↑                                            is in the wave
+        │
+        └── spring-ai-autoconfigure-model-chat-memory-repository-cosmos-db
+                                            ← pinned via the
+                                              <spring-ai-cosmos-chat-memory.version>
+                                              property in autoconfigure's
+                                              own pom.xml
 ```
 
-The autoconfigure module pins the store via a property in its own
-`pom.xml`. If you change the store, release it first (or include both in
-the same wave with the property bumped to the new released version), then
-release the autoconfigure module.
+Each autoconfigure module pins its corresponding core module via a
+property in its own `pom.xml`. If you change a core module, release it
+first (or include both in the same wave with the property bumped to the
+new released version), then release its autoconfigure module. The two
+pairs are independent — releases across pairs can happen in any order.
 
 ### Development cycle
 
 During development, all modules live in a single Maven reactor and
-inter-module dependencies resolve from **source** (the autoconfigure
-module's `<spring-ai-cosmos-db-store.version>` is always
-`X.Y.Z-SNAPSHOT`, matching the local store module). This means:
+inter-module dependencies resolve from **source** (each autoconfigure
+module's pinning property — `<spring-ai-cosmos-db-store.version>` for
+the vector store pair, `<spring-ai-cosmos-chat-memory.version>` for the
+chat memory pair — is always `X.Y.Z-SNAPSHOT`, matching its local core
+module). This means:
 
-- Changes to `spring-ai-azure-cosmos-db-store` are immediately visible to
-  the autoconfigure module in the same build.
+- Changes to a core module (vector store or chat memory) are immediately
+  visible to its autoconfigure module in the same build.
 - Each module's `pom.xml <version>` reflects the **next release version**
   with `-SNAPSHOT` appended.
 
-At **release time**, the dependency ordering matters: if the store is
-changing, the wave PR must bump both the store version and autoconfigure's
-`<spring-ai-cosmos-db-store.version>` property to a release coordinate.
-After release, the post-release PR puts everything back to `-SNAPSHOT` so
-the reactor build resolves from source again.
+At **release time**, the dependency ordering matters: if a core module
+(vector store or chat memory) is changing alongside its autoconfigure,
+the wave PR must bump both the core module's version and the matching
+pinning property in its autoconfigure's `pom.xml`
+(`<spring-ai-cosmos-db-store.version>` for the vector store pair,
+`<spring-ai-cosmos-chat-memory.version>` for the chat memory pair) to a
+release coordinate. After release, the post-release PR puts everything
+back to `-SNAPSHOT` so the reactor build resolves from source again.
 
 ## Release pipeline
 
@@ -119,6 +132,7 @@ Valid module names in tags:
 - `spring-ai-azure-cosmos-db-store`
 - `spring-ai-autoconfigure-vector-store-azure-cosmos-db`
 - `spring-ai-model-chat-memory-repository-cosmos-db`
+- `spring-ai-autoconfigure-model-chat-memory-repository-cosmos-db`
 
 Tags that do **not** match (and will be silently ignored):
 
@@ -180,11 +194,17 @@ git checkout -b release/wave-$(date -u +%Y%m%d)
 For each module being released:
 
 1. Edit `<MODULE>/pom.xml` — drop `-SNAPSHOT` from `<version>`.
-2. **For `spring-ai-autoconfigure-vector-store-azure-cosmos-db` only:** if
-   `spring-ai-azure-cosmos-db-store` is in the wave, set
-   `<spring-ai-cosmos-db-store.version>` in autoconfigure's `pom.xml` to
-   the wave's store release version. Otherwise, verify the existing value
-   is a non-SNAPSHOT release version.
+2. **For autoconfigure modules only:** if the corresponding core module
+   is in the same wave, set the matching pinning property in
+   autoconfigure's `pom.xml` to the wave's core release version.
+   Otherwise, verify the existing value is a non-SNAPSHOT release
+   version.
+   - `spring-ai-autoconfigure-vector-store-azure-cosmos-db` pins
+     `spring-ai-azure-cosmos-db-store` via
+     `<spring-ai-cosmos-db-store.version>`.
+   - `spring-ai-autoconfigure-model-chat-memory-repository-cosmos-db`
+     pins `spring-ai-model-chat-memory-repository-cosmos-db` via
+     `<spring-ai-cosmos-chat-memory.version>`.
 3. Edit `<MODULE>/CHANGELOG.md`:
    - Replace `## [Unreleased]` with `## [<VERSION>] — <DATE>`.
    - Insert a new `## [Unreleased]` block above with empty Keep-a-Changelog
@@ -239,10 +259,18 @@ to `origin`.
 > **Important:** Push tags **one at a time**. `git push origin <tag1>
 > <tag2>` silently delivers only one trigger event to GitHub Actions.
 
-For multi-module waves: tag `spring-ai-azure-cosmos-db-store` first.
-**Wait for its release run to complete (and the GitHub Release to appear)
-before tagging `spring-ai-autoconfigure-vector-store-azure-cosmos-db`** —
-the autoconfigure release will fail otherwise.
+For multi-module waves: tag each core module *before* its autoconfigure.
+**Wait for the core module's release run to complete (and the GitHub
+Release to appear) before tagging the matching autoconfigure** — the
+autoconfigure release will fail otherwise.
+
+- Tag `spring-ai-azure-cosmos-db-store` before
+  `spring-ai-autoconfigure-vector-store-azure-cosmos-db`.
+- Tag `spring-ai-model-chat-memory-repository-cosmos-db` before
+  `spring-ai-autoconfigure-model-chat-memory-repository-cosmos-db`.
+
+The two pairs are independent; tags across pairs can be pushed in any
+order.
 
 ### 5. Monitor and approve
 
@@ -274,10 +302,16 @@ follow-up PR `chore/post-release-<wave-id>`:
 1. Bump each released module's `pom.xml <version>` to the next dev
    SNAPSHOT (typically `X.Y.(Z+1)-SNAPSHOT` after a stable release, or
    `X.Y.Z-beta.(N+1)-SNAPSHOT` after a beta).
-2. If `spring-ai-azure-cosmos-db-store` was released in this wave, bump
-   `<spring-ai-cosmos-db-store.version>` in autoconfigure's `pom.xml`
-   back to the next store SNAPSHOT, so the reactor build resolves from
-   source again during ongoing development.
+2. For each core module released in this wave, bump the matching
+   pinning property in its autoconfigure's `pom.xml` back to the next
+   core SNAPSHOT, so the reactor build resolves from source again during
+   ongoing development:
+   - Released `spring-ai-azure-cosmos-db-store` → bump
+     `<spring-ai-cosmos-db-store.version>` in
+     `spring-ai-autoconfigure-vector-store-azure-cosmos-db`.
+   - Released `spring-ai-model-chat-memory-repository-cosmos-db` → bump
+     `<spring-ai-cosmos-chat-memory.version>` in
+     `spring-ai-autoconfigure-model-chat-memory-repository-cosmos-db`.
 
 This keeps `main` honest about what version is currently in development
 and prevents accidental re-tagging of an already-published version.
@@ -348,10 +382,12 @@ tag, and re-tag.
 
 ### "Reject internal SNAPSHOT dependencies"
 
-The autoconfigure module was tagged while
-`<spring-ai-cosmos-db-store.version>` was still a SNAPSHOT. Open a
-follow-up PR that bumps the property to the released store version, merge,
-delete the failed tag, re-tag.
+An autoconfigure module was tagged while its core-module pinning property
+was still a SNAPSHOT (`<spring-ai-cosmos-db-store.version>` for the
+vector store autoconfigure, `<spring-ai-cosmos-chat-memory.version>` for
+the chat memory autoconfigure). Open a follow-up PR that bumps the
+property to the released core version, merge, delete the failed tag,
+re-tag.
 
 ### External SNAPSHOT warnings
 

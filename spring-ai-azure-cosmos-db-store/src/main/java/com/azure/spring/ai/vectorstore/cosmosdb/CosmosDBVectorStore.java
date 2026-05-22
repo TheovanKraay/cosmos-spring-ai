@@ -450,7 +450,7 @@ public class CosmosDBVectorStore extends AbstractObservationVectorStore implemen
 
 	@Override
 	public VectorStoreObservationContext.Builder createObservationContextBuilder(String operationName) {
-		return VectorStoreObservationContext.builder("cosmosdb", operationName)
+		return VectorStoreObservationContext.builder(CosmosDBVectorStoreConstants.PROVIDER_NAME, operationName)
 			.collectionName(this.container.getId())
 			.dimensions(this.embeddingModel.dimensions())
 			.namespace(this.container.getDatabase().getId())

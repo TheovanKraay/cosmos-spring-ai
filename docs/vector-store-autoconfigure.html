@@ -127,6 +127,12 @@ public class DemoApplication implements CommandLineRunner {
 <h2>Manual Configuration</h2>
 <p>If you prefer to configure the vector store manually (without auto-configuration), see the <a href="vector-store.html">Vector Store</a> page.</p>
 
+<h2>Multiple Vector Stores</h2>
+<p>If you have multiple vector store starters on the classpath, set the <code>spring.ai.vectorstore.type</code> property to select which one to activate:</p>
+<pre><code class="language-properties">spring.ai.vectorstore.type=azure-cosmos-db</code></pre>
+<p>This value is exposed as <code>CosmosDBVectorStoreConstants.VECTOR_STORE_TYPE</code> for programmatic use.</p>
+<div class="tip"><strong>💡 Tip:</strong> If Cosmos DB is the only vector store on the classpath, this property is not needed — it defaults to enabled (<code>matchIfMissing = true</code>).</div>
+
 </main>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>

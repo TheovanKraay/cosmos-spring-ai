@@ -19,6 +19,7 @@ package com.azure.spring.ai.vectorstore.cosmosdb.autoconfigure;
 import com.azure.cosmos.CosmosAsyncClient;
 import com.azure.cosmos.CosmosClientBuilder;
 import com.azure.identity.DefaultAzureCredentialBuilder;
+import com.azure.spring.ai.vectorstore.cosmosdb.CosmosDBVectorStoreConstants;
 import io.micrometer.observation.ObservationRegistry;
 
 import org.springframework.ai.embedding.BatchingStrategy;
@@ -47,7 +48,7 @@ import org.springframework.context.annotation.Bean;
 @AutoConfiguration
 @ConditionalOnClass({ CosmosDBVectorStore.class, EmbeddingModel.class, CosmosAsyncClient.class })
 @EnableConfigurationProperties(CosmosDBVectorStoreProperties.class)
-@ConditionalOnProperty(name = "spring.ai.vectorstore.type", havingValue = "azure-cosmos-db",
+@ConditionalOnProperty(name = "spring.ai.vectorstore.type", havingValue = CosmosDBVectorStoreConstants.VECTOR_STORE_TYPE,
 		matchIfMissing = true)
 public class CosmosDBVectorStoreAutoConfiguration {
 

@@ -45,7 +45,7 @@ Fix (vector-store autoconfigure shown; same procedure applies to
 chat-memory autoconfigure with its corresponding property and module name):
 
 1. Open a follow-up PR that bumps the property to the released core
-   version (`X.Y.Z` or `X.Y.Z-beta.N`).
+   version (`X.Y.Z`, `X.Y.Z-beta.N`, or `X.Y.Z-MN`).
 2. Merge.
 3. Delete the failed tag, re-tag from the new merge commit:
 
@@ -120,15 +120,17 @@ Follows [Semantic Versioning](https://semver.org/):
 - **Minor** (`0.Y.0`) — new features, backward compatible
 - **Patch** (`0.0.Z`) — bug fixes, backward compatible
 - **Beta** (`X.Y.Z-beta.N`) — pre-release, may have breaking changes
+- **Milestone** (`X.Y.Z-MN`) — pre-release following Spring convention (no dot before N)
 
 Release-candidate versions (`-rc.N`) are **not supported** by the workflow's
-tag regex. Use `-beta.N` for any pre-release.
+tag regex. Use `-beta.N` or `-MN` for any pre-release.
 
 ## Tag grammar (authoritative)
 
 ```
 <module>-v<MAJOR>.<MINOR>.<PATCH>             # stable
 <module>-v<MAJOR>.<MINOR>.<PATCH>-beta.<N>    # beta
+<module>-v<MAJOR>.<MINOR>.<PATCH>-M<N>        # milestone (Spring convention)
 ```
 
 Where `<module>` is exactly one of:
@@ -140,7 +142,7 @@ Where `<module>` is exactly one of:
 
 The workflow uses an explicit per-module allowlist (not a wildcard); any
 tag outside this grammar is silently ignored. The `parse-tag` job validates
-the version regex `^[0-9]+\.[0-9]+\.[0-9]+(-beta\.[0-9]+)?$`.
+the version regex `^[0-9]+\.[0-9]+\.[0-9]+(-beta\.[0-9]+|-M[0-9]+)?$`.
 
 ## Why no parent POM and no root `<module-name>.version` properties?
 

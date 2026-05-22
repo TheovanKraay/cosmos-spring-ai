@@ -22,7 +22,7 @@
 
     <groupId>com.azure.spring.ai</groupId>
     <artifactId>spring-ai-autoconfigure-model-chat-memory-repository-cosmos-db</artifactId>
-    <version>1.0.0-M.1</version>
+    <version>1.0.0-M1</version>
     <name>Spring AI Auto Configuration - Chat Memory Repository - CosmosDB</name>
     <description>Spring AI Auto Configuration for CosmosDB Chat Memory Repository</description>
     <url>https://github.com/AzureCosmosDB/spring-ai</url>
@@ -41,10 +41,12 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <spring-ai.version>2.0.0-M7</spring-ai.version>
         <spring-boot.version>4.1.0-RC1</spring-boot.version>
-        <spring-ai-cosmos-chat-memory.version>1.0.0-M.1</spring-ai-cosmos-chat-memory.version>
+        <spring-ai-cosmos-chat-memory.version>1.0.0-M1</spring-ai-cosmos-chat-memory.version>
         <azure-cosmos.version>5.22.0</azure-cosmos.version>
         <azure-identity.version>1.18.2</azure-identity.version>
         <jspecify.version>1.0.0</jspecify.version>
+
+        <flatten-maven-plugin.version>1.5.0</flatten-maven-plugin.version>
     </properties>
 
     <dependencyManagement>
@@ -150,6 +152,39 @@
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
+                <version>${flatten-maven-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>flatten</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>flatten</goal>
+                        </goals>
+                        <configuration>
+                            <updatePomFile>true</updatePomFile>
+                            <flattenMode>ossrh</flattenMode>
+                            <pomElements>
+                                <distributionManagement>remove</distributionManagement>
+                                <dependencyManagement>remove</dependencyManagement>
+                                <repositories>remove</repositories>
+                                <scm>keep</scm>
+                                <url>keep</url>
+                                <organization>resolve</organization>
+                            </pomElements>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>flatten.clean</id>
+                        <phase>clean</phase>
+                        <goals>
+                            <goal>clean</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>

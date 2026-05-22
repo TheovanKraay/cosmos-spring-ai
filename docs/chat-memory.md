@@ -8,7 +8,7 @@ The `CosmosDBChatMemoryRepository` provides persistent chat memory storage using
 <dependency>
     <groupId>com.azure.spring.ai</groupId>
     <artifactId>spring-ai-model-chat-memory-repository-cosmos-db</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0-M1</version>
 </dependency>
 ```
 

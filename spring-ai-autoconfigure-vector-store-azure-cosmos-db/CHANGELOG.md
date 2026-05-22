@@ -34,3 +34,4 @@ their own changelogs.
 ### Added
 
 - Initial milestone release of the Azure Cosmos DB vector store auto-configuration for Spring Boot
+- Pins `spring-ai-azure-cosmos-db-store` at `1.0.0-M.1` (`<spring-ai-cosmos-db-store.version>`)

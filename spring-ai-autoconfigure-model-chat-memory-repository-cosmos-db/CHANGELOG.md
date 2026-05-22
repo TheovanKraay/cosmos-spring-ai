@@ -35,3 +35,4 @@ changelogs.
 ### Added
 
 - Initial milestone release of the Azure Cosmos DB chat memory auto-configuration for Spring Boot
+- Pins `spring-ai-model-chat-memory-repository-cosmos-db` at `1.0.0-M.1` (`<spring-ai-cosmos-chat-memory.version>`)

@@ -17,7 +17,7 @@ Community-maintained Spring AI integrations for Azure Cosmos DB.
 <dependency>
     <groupId>com.azure.spring.ai</groupId>
     <artifactId>spring-ai-azure-cosmos-db-store</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0-M1</version>
 </dependency>
 ```
 
@@ -25,7 +25,7 @@ Community-maintained Spring AI integrations for Azure Cosmos DB.
 <dependency>
     <groupId>com.azure.spring.ai</groupId>
     <artifactId>spring-ai-autoconfigure-vector-store-azure-cosmos-db</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0-M1</version>
 </dependency>
 ```
 
@@ -33,7 +33,7 @@ Community-maintained Spring AI integrations for Azure Cosmos DB.
 <dependency>
     <groupId>com.azure.spring.ai</groupId>
     <artifactId>spring-ai-model-chat-memory-repository-cosmos-db</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0-M1</version>
 </dependency>
 ```
 
@@ -41,7 +41,7 @@ Community-maintained Spring AI integrations for Azure Cosmos DB.
 <dependency>
     <groupId>com.azure.spring.ai</groupId>
     <artifactId>spring-ai-autoconfigure-model-chat-memory-repository-cosmos-db</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0-M1</version>
 </dependency>
 ```
 

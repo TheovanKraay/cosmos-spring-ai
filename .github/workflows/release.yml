@@ -63,7 +63,7 @@ jobs:
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
           # Allowlist-driven parser: try each known module's "<module>-v" prefix
-          # in turn. Strict version regex enforces semver-with-optional-beta so
+          # in turn. Strict version regex enforces semver with optional beta/milestone so
           # malformed tags or future qualifiers can't slip through. This avoids
           # any ambiguity around module names that themselves contain "-v"
           # (e.g. spring-ai-autoconfigure-vector-store-azure-cosmos-db).
@@ -89,7 +89,7 @@ jobs:
           done
 
           if [ -z "$MODULE" ]; then
-            echo "::error::Invalid release tag '$TAG'. Expected '<module>-v<MAJOR>.<MINOR>.<PATCH>[-(beta|M).N]' where module is one of: ${VALID_MODULES[*]}"
+            echo "::error::Invalid release tag '$TAG'. Expected '<module>-v<MAJOR>.<MINOR>.<PATCH>' with optional '-beta.<N>' or '-M.<N>' suffix, where module is one of: ${VALID_MODULES[*]}"
             exit 1
           fi
 

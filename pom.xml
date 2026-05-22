@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- trigger PR approval reset -->
 <!--
   ~ Aggregator POM - allows building all modules from the root with `mvn verify`.
   ~ This is NOT a parent POM. Each module is independently versioned and self-contained.

@@ -64,7 +64,6 @@ import tools.jackson.databind.node.ObjectNode;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.embedding.EmbeddingOptions;
-import org.springframework.ai.observation.conventions.VectorStoreProvider;
 import org.springframework.ai.vectorstore.AbstractVectorStoreBuilder;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.filter.Filter;
@@ -451,7 +450,7 @@ public class CosmosDBVectorStore extends AbstractObservationVectorStore implemen
 
 	@Override
 	public VectorStoreObservationContext.Builder createObservationContextBuilder(String operationName) {
-		return VectorStoreObservationContext.builder(VectorStoreProvider.COSMOSDB.value(), operationName)
+		return VectorStoreObservationContext.builder("cosmosdb", operationName)
 			.collectionName(this.container.getId())
 			.dimensions(this.embeddingModel.dimensions())
 			.namespace(this.container.getDatabase().getId())

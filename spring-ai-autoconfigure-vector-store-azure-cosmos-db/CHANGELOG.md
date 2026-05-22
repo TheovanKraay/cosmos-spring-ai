@@ -28,3 +28,9 @@ their own changelogs.
 ### Fixed
 
 ### Security
+
+## [1.0.0-M.1] — 2026-05-22
+
+### Added
+
+- Initial milestone release of the Azure Cosmos DB vector store auto-configuration for Spring Boot

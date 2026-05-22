@@ -17,11 +17,11 @@ on:
       - 'spring-ai-autoconfigure-vector-store-azure-cosmos-db-v[0-9]*.[0-9]*.[0-9]*-beta.[0-9]*'
       - 'spring-ai-model-chat-memory-repository-cosmos-db-v[0-9]*.[0-9]*.[0-9]*-beta.[0-9]*'
       - 'spring-ai-autoconfigure-model-chat-memory-repository-cosmos-db-v[0-9]*.[0-9]*.[0-9]*-beta.[0-9]*'
-      # Milestone: <module>-vMAJOR.MINOR.PATCH-M.N
-      - 'spring-ai-azure-cosmos-db-store-v[0-9]*.[0-9]*.[0-9]*-M.[0-9]*'
-      - 'spring-ai-autoconfigure-vector-store-azure-cosmos-db-v[0-9]*.[0-9]*.[0-9]*-M.[0-9]*'
-      - 'spring-ai-model-chat-memory-repository-cosmos-db-v[0-9]*.[0-9]*.[0-9]*-M.[0-9]*'
-      - 'spring-ai-autoconfigure-model-chat-memory-repository-cosmos-db-v[0-9]*.[0-9]*.[0-9]*-M.[0-9]*'
+      # Milestone: <module>-vMAJOR.MINOR.PATCH-MN  (Spring convention, no dot)
+      - 'spring-ai-azure-cosmos-db-store-v[0-9]*.[0-9]*.[0-9]*-M[0-9]*'
+      - 'spring-ai-autoconfigure-vector-store-azure-cosmos-db-v[0-9]*.[0-9]*.[0-9]*-M[0-9]*'
+      - 'spring-ai-model-chat-memory-repository-cosmos-db-v[0-9]*.[0-9]*.[0-9]*-M[0-9]*'
+      - 'spring-ai-autoconfigure-model-chat-memory-repository-cosmos-db-v[0-9]*.[0-9]*.[0-9]*-M[0-9]*'
   workflow_dispatch:
     inputs:
       tag:
@@ -80,7 +80,7 @@ jobs:
             prefix="${candidate}-v"
             if [[ "$TAG" == "$prefix"* ]]; then
               parsed_version="${TAG#"$prefix"}"
-              if [[ "$parsed_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-(beta|M)\.[0-9]+)?$ ]]; then
+              if [[ "$parsed_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-beta\.[0-9]+|-M[0-9]+)?$ ]]; then
                 MODULE="$candidate"
                 VERSION="$parsed_version"
                 break
@@ -89,12 +89,12 @@ jobs:
           done
 
           if [ -z "$MODULE" ]; then
-            echo "::error::Invalid release tag '$TAG'. Expected '<module>-v<MAJOR>.<MINOR>.<PATCH>' with optional '-beta.<N>' or '-M.<N>' suffix, where module is one of: ${VALID_MODULES[*]}"
+            echo "::error::Invalid release tag '$TAG'. Expected '<module>-v<MAJOR>.<MINOR>.<PATCH>' with optional '-beta.<N>' or '-M<N>' suffix, where module is one of: ${VALID_MODULES[*]}"
             exit 1
           fi
 
           IS_PRERELEASE=false
-          if [[ "$VERSION" == *-beta.* || "$VERSION" == *-M.* ]]; then
+          if [[ "$VERSION" == *-beta.* || "$VERSION" == *-M* ]]; then
             IS_PRERELEASE=true
           fi
 

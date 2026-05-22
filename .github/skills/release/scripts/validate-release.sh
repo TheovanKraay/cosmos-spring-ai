@@ -108,7 +108,7 @@ check_origin_url() {
     fi
 }
 
-SEMVER_REGEX='^[0-9]+\.[0-9]+\.[0-9]+(-beta\.[0-9]+)?$'
+SEMVER_REGEX='^[0-9]+\.[0-9]+\.[0-9]+(-(beta|M)\.[0-9]+)?$'
 TAG="${MODULE}-v${VERSION}"
 POM="$REPO_ROOT/$MODULE/pom.xml"
 CHANGELOG="$REPO_ROOT/$MODULE/CHANGELOG.md"

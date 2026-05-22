@@ -22,8 +22,8 @@ arguments:
     type: string
     required: true
     description: >
-      Version to release following semver (X.Y.Z or X.Y.Z-beta.N), e.g.
-      1.0.0-beta.1, 1.0.0.
+      Version to release following semver (X.Y.Z, X.Y.Z-beta.N, or X.Y.Z-MN), e.g.
+      1.0.0-beta.1, 1.0.0-M1, 1.0.0.
   date:
     type: string
     required: false
@@ -260,6 +260,8 @@ Ask the user for the next dev version per module. Common defaults:
 - After a stable release `X.Y.Z` → `X.Y.(Z+1)-SNAPSHOT`
 - After a beta `X.Y.Z-beta.N` → `X.Y.Z-beta.(N+1)-SNAPSHOT` or
   `X.Y.Z-SNAPSHOT` (depends on whether more betas are planned)
+- After a milestone `X.Y.Z-MN` → `X.Y.Z-M(N+1)-SNAPSHOT` or
+  `X.Y.Z-SNAPSHOT` (depends on whether more milestones are planned)
 
 For each core module released in this wave, bump the matching autoconfigure
 module's inter-module version property

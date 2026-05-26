@@ -25,7 +25,7 @@ their own changelogs.
 
 ### Security
 
-## [1.0.0-M1] — 2026-05-22
+## [1.0.0-M1] — 2026-05-26
 
 ### Added
 

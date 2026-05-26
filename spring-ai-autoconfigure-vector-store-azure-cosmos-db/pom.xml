@@ -6,7 +6,7 @@
 
     <groupId>com.azure.spring.ai</groupId>
     <artifactId>spring-ai-autoconfigure-vector-store-azure-cosmos-db</artifactId>
-    <version>1.0.0-M2-SNAPSHOT</version>
+    <version>1.0.0-RC1-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>Spring AI Auto Configuration for Azure Cosmos DB Vector Store</name>
@@ -45,7 +45,7 @@
         <azure-cosmos.version>5.22.0</azure-cosmos.version>
         <azure-identity.version>1.18.2</azure-identity.version>
         <jspecify.version>1.0.0</jspecify.version>
-        <spring-ai-cosmos-db-store.version>1.0.0-M2-SNAPSHOT</spring-ai-cosmos-db-store.version>
+        <spring-ai-cosmos-db-store.version>1.0.0-RC1-SNAPSHOT</spring-ai-cosmos-db-store.version>
 
         <flatten-maven-plugin.version>1.5.0</flatten-maven-plugin.version>
     </properties>

@@ -57,9 +57,6 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.json.JsonMapper;
-import tools.jackson.databind.node.ObjectNode;
 
 import org.springframework.ai.document.Document;
 import org.springframework.ai.embedding.EmbeddingModel;
@@ -98,6 +95,8 @@ public class CosmosDBVectorStore extends AbstractObservationVectorStore implemen
 
 	private final List<String> metadataFieldsList;
 
+	private final CosmosVectorIndexType vectorIndexType;
+
 	private CosmosAsyncContainer container;
 
 	/**
@@ -119,6 +118,7 @@ public class CosmosDBVectorStore extends AbstractObservationVectorStore implemen
 		this.vectorStoreThroughput = builder.vectorStoreThroughput == 0 ? 400 : builder.vectorStoreThroughput;
 		this.vectorDimensions = builder.vectorDimensions;
 		this.metadataFieldsList = builder.metadataFieldsList;
+		this.vectorIndexType = builder.vectorIndexType;
 
 		try {
 			this.cosmosClient.createDatabaseIfNotExists(this.databaseName).block();
@@ -173,7 +173,7 @@ public class CosmosDBVectorStore extends AbstractObservationVectorStore implemen
 		indexingPolicy.setIncludedPaths(ImmutableList.of(includedPath1, includedPath2));
 		CosmosVectorIndexSpec cosmosVectorIndexSpec = new CosmosVectorIndexSpec();
 		cosmosVectorIndexSpec.setPath("/embedding");
-		cosmosVectorIndexSpec.setType(CosmosVectorIndexType.DISK_ANN.toString());
+		cosmosVectorIndexSpec.setType(this.vectorIndexType.toString());
 		indexingPolicy.setVectorIndexes(List.of(cosmosVectorIndexSpec));
 		collectionDefinition.setIndexingPolicy(indexingPolicy);
 
@@ -192,24 +192,18 @@ public class CosmosDBVectorStore extends AbstractObservationVectorStore implemen
 		}
 	}
 
-	private JsonNode mapCosmosDocument(Document document, float[] queryEmbedding) {
-		String id = document.getId();
-		String content = document.getText();
-
-		// Convert metadata and embedding directly to JsonNode
-		JsonNode metadataNode = JsonMapper.shared().valueToTree(document.getMetadata());
-		JsonNode embeddingNode = JsonMapper.shared().valueToTree(queryEmbedding);
-
-		// Create an ObjectNode specifically
-		ObjectNode objectNode = JsonMapper.shared().createObjectNode();
-
-		// Use put for simple values and set for JsonNode values
-		objectNode.put("id", id);
-		objectNode.put("content", content);
-		objectNode.set("metadata", metadataNode); // Use set to add JsonNode directly
-		objectNode.set("embedding", embeddingNode); // Use set to add JsonNode directly
-
-		return objectNode;
+	private Map<String, Object> mapCosmosDocument(Document document, float[] queryEmbedding) {
+		Map<String, Object> doc = new HashMap<>();
+		doc.put("id", document.getId());
+		doc.put("content", document.getText());
+		doc.put("metadata", document.getMetadata());
+		// Convert float[] to List<Float> for proper serialization
+		List<Float> embeddingList = new ArrayList<>(queryEmbedding.length);
+		for (float f : queryEmbedding) {
+			embeddingList.add(f);
+		}
+		doc.put("embedding", embeddingList);
+		return doc;
 	}
 
 	@Override
@@ -314,29 +308,31 @@ public class CosmosDBVectorStore extends AbstractObservationVectorStore implemen
 					// Run a reactive query to fetch the document by ID
 					SqlQuerySpec querySpec = new SqlQuerySpec("SELECT * FROM c WHERE c.id = @id",
 							List.of(new SqlParameter("@id", id)));
-					CosmosPagedFlux<JsonNode> queryFlux = this.container.queryItems(querySpec,
-							new CosmosQueryRequestOptions(), JsonNode.class);
+					CosmosPagedFlux<Object> queryFlux = this.container.queryItems(querySpec,
+							new CosmosQueryRequestOptions(), Object.class);
 
 					// Block to retrieve the first page synchronously
-					FeedResponse<JsonNode> jsonNodeFeedResponse = queryFlux.byPage(1).blockFirst();
-					if (jsonNodeFeedResponse == null) {
+					FeedResponse<Object> feedResponse = queryFlux.byPage(1).blockFirst();
+					if (feedResponse == null) {
 						throw new IllegalArgumentException("No document found for id: " + id);
 					}
-					List<JsonNode> documents = jsonNodeFeedResponse.getResults();
+					List<Object> documents = feedResponse.getResults();
 
 					if (documents == null || documents.isEmpty()) {
 						throw new IllegalArgumentException("No document found for id: " + id);
 					}
 
-					JsonNode document = documents.get(0);
-					JsonNode metadataNode = document.get("metadata");
+					@SuppressWarnings("unchecked")
+					Map<String, Object> document = (Map<String, Object>) documents.get(0);
+					@SuppressWarnings("unchecked")
+					Map<String, Object> metadataNode = (Map<String, Object>) document.get("metadata");
 
 					if (metadataNode == null || metadataNode.get(metadataKey) == null) {
 						throw new IllegalArgumentException("Partition key '" + metadataKey
 								+ "' not found in metadata for document with id: " + id);
 					}
 
-					partitionKeyValue = metadataNode.get(metadataKey).asText();
+					partitionKeyValue = metadataNode.get(metadataKey).toString();
 				}
 				else {
 					throw new IllegalArgumentException("Unsupported partition key path: " + this.partitionKeyPath);
@@ -408,38 +404,34 @@ public class CosmosDBVectorStore extends AbstractObservationVectorStore implemen
 		SqlQuerySpec sqlQuerySpec = new SqlQuerySpec(query, parameters);
 		CosmosQueryRequestOptions options = new CosmosQueryRequestOptions();
 
-		CosmosPagedFlux<JsonNode> pagedFlux = this.container.queryItems(sqlQuerySpec, options, JsonNode.class);
+		CosmosPagedFlux<Object> pagedFlux = this.container.queryItems(sqlQuerySpec, options, Object.class);
 
 		logger.info("Executing similarity search query: {}", query);
 		try {
 			// Collect documents from the paged flux
-			List<JsonNode> documents = pagedFlux.byPage()
+			List<Object> rawDocuments = pagedFlux.byPage()
 				.flatMap(page -> Flux.fromIterable(page.getResults()))
 				.collectList()
 				.block();
-			if (documents == null) {
-				documents = new ArrayList<>();
+			if (rawDocuments == null) {
+				rawDocuments = new ArrayList<>();
 			}
 
-			// Collect metadata fields from the documents
-			Map<String, Object> docFields = new HashMap<>();
-			for (var doc : documents) {
-				JsonNode metadata = doc.get("metadata");
-				metadata.propertyNames().forEach(property -> {
-					JsonNode value = metadata.get(property);
-					Object parsedValue = value.isTextual() ? value.asText() : value.isNumber() ? value.numberValue()
-							: value.isBoolean() ? value.booleanValue() : value.toString();
-					docFields.put(property, parsedValue);
-				});
-			}
-
-			// Convert JsonNode to Document
-			return documents.stream()
-				.map(doc -> Document.builder()
-					.id(doc.get("id").asText())
-					.text(doc.get("content").asText())
-					.metadata(docFields)
-					.build())
+			// Convert raw Maps to Document objects
+			return rawDocuments.stream()
+				.filter(Map.class::isInstance)
+				.map(item -> {
+					@SuppressWarnings("unchecked")
+					Map<String, Object> doc = (Map<String, Object>) item;
+					@SuppressWarnings("unchecked")
+					Map<String, Object> metadata = doc.get("metadata") != null
+							? (Map<String, Object>) doc.get("metadata") : new HashMap<>();
+					return Document.builder()
+						.id((String) doc.get("id"))
+						.text((String) doc.get("content"))
+						.metadata(metadata)
+						.build();
+				})
 				.collect(Collectors.toList());
 		}
 		catch (Exception e) {
@@ -486,6 +478,8 @@ public class CosmosDBVectorStore extends AbstractObservationVectorStore implemen
 		private long vectorDimensions = 1536;
 
 		private List<String> metadataFieldsList = new ArrayList<>();
+
+		private CosmosVectorIndexType vectorIndexType = CosmosVectorIndexType.DISK_ANN;
 
 		private Builder(CosmosAsyncClient cosmosClient, EmbeddingModel embeddingModel) {
 			super(embeddingModel);
@@ -561,6 +555,18 @@ public class CosmosDBVectorStore extends AbstractObservationVectorStore implemen
 		public Builder metadataFields(List<String> metadataFieldsList) {
 			this.metadataFieldsList = metadataFieldsList != null ? new ArrayList<>(metadataFieldsList)
 					: new ArrayList<>();
+			return this;
+		}
+
+		/**
+		 * Sets the vector index type.
+		 * @param vectorIndexType the vector index type (FLAT, QUANTIZED_FLAT, or
+		 * DISK_ANN)
+		 * @return the builder instance
+		 */
+		public Builder vectorIndexType(CosmosVectorIndexType vectorIndexType) {
+			Assert.notNull(vectorIndexType, "Vector index type must not be null");
+			this.vectorIndexType = vectorIndexType;
 			return this;
 		}
 

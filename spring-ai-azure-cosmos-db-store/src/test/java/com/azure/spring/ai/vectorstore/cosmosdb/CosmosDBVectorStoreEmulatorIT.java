@@ -24,6 +24,7 @@ import java.util.UUID;
 import com.azure.cosmos.CosmosAsyncClient;
 import com.azure.cosmos.CosmosAsyncContainer;
 import com.azure.cosmos.CosmosClientBuilder;
+import com.azure.cosmos.models.CosmosVectorIndexType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -86,6 +87,60 @@ class CosmosDBVectorStoreEmulatorIT {
 		assertThat(afterDelete).isEmpty();
 	}
 
+	/**
+	 * Tests that documents are stored with correct IDs and metadata in Cosmos DB.
+	 * This specifically catches the Jackson 3 serialization bug where ObjectNode
+	 * passed to the Cosmos SDK would lose all fields (including id) because the SDK
+	 * uses Jackson 2 internally.
+	 */
+	@Test
+	void testDocumentIdAndMetadataPreservedOnRoundTrip() {
+		String specificId = UUID.randomUUID().toString();
+		Document document = new Document(specificId, "This tests that document IDs survive serialization",
+				Map.of("topic", "serialization"));
+
+		this.vectorStore.add(List.of(document));
+
+		List<Document> results = this.vectorStore
+			.similaritySearch(SearchRequest.builder().query("document IDs survive serialization").topK(1).build());
+
+		assertThat(results).hasSize(1);
+		assertThat(results.get(0).getId()).isEqualTo(specificId);
+		assertThat(results.get(0).getMetadata()).containsEntry("topic", "serialization");
+		assertThat(results.get(0).getText()).isEqualTo("This tests that document IDs survive serialization");
+
+		// Clean up
+		this.vectorStore.delete(List.of(specificId));
+	}
+
+	/**
+	 * Tests that multiple documents can be bulk-inserted and each retains its
+	 * unique ID. This catches the bug where all documents would get id=null due to
+	 * Jackson 3/2 incompatibility, resulting in HTTP 400 from Cosmos DB.
+	 */
+	@Test
+	void testBulkInsertPreservesDistinctIds() {
+		List<Document> documents = List.of(
+				new Document(UUID.randomUUID().toString(), "First document about cats", Map.of("topic", "animals")),
+				new Document(UUID.randomUUID().toString(), "Second document about dogs", Map.of("topic", "animals")),
+				new Document(UUID.randomUUID().toString(), "Third document about birds", Map.of("topic", "animals")));
+
+		// This would throw HTTP 400 if IDs are null due to serialization bug
+		this.vectorStore.add(documents);
+
+		List<Document> results = this.vectorStore
+			.similaritySearch(SearchRequest.builder().query("animals cats dogs birds").topK(5).build());
+
+		assertThat(results).hasSizeGreaterThanOrEqualTo(3);
+
+		// Verify all documents have distinct IDs
+		List<String> resultIds = results.stream().map(Document::getId).toList();
+		assertThat(resultIds).doesNotHaveDuplicates();
+
+		// Clean up
+		this.vectorStore.delete(documents.stream().map(Document::getId).toList());
+	}
+
 	@Test
 	void testGetNativeClient() {
 		this.contextRunner.run(context -> {
@@ -103,9 +158,11 @@ class CosmosDBVectorStoreEmulatorIT {
 		public VectorStore vectorStore(CosmosAsyncClient cosmosClient, EmbeddingModel embeddingModel) {
 			return CosmosDBVectorStore.builder(cosmosClient, embeddingModel)
 				.databaseName("emulator-test-db")
-				.containerName("emulator-vector-store")
+				.containerName("emulator-vector-store-flat")
 				.metadataFields(List.of("topic"))
 				.vectorStoreThroughput(400)
+				.vectorIndexType(CosmosVectorIndexType.FLAT)
+				.vectorDimensions(384)
 				.build();
 		}
 

@@ -18,6 +18,7 @@ package com.azure.spring.ai.vectorstore.cosmosdb.autoconfigure;
 
 import com.azure.cosmos.CosmosAsyncClient;
 import com.azure.cosmos.CosmosClientBuilder;
+import com.azure.cosmos.models.CosmosVectorIndexType;
 import com.azure.identity.DefaultAzureCredentialBuilder;
 import com.azure.spring.ai.vectorstore.cosmosdb.CosmosDBVectorStoreConstants;
 import io.micrometer.observation.ObservationRegistry;
@@ -103,6 +104,10 @@ public class CosmosDBVectorStoreAutoConfiguration {
 		}
 		if (properties.getPartitionKeyPath() != null) {
 			builder.partitionKeyPath(properties.getPartitionKeyPath());
+		}
+		if (properties.getVectorIndexType() != null) {
+			builder.vectorIndexType(
+					CosmosVectorIndexType.valueOf(properties.getVectorIndexType().toUpperCase()));
 		}
 		return builder.build();
 	}

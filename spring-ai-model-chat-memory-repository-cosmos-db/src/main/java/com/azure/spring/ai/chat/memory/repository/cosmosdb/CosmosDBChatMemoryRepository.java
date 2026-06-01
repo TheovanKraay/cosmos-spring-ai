@@ -17,11 +17,13 @@
 package com.azure.spring.ai.chat.memory.repository.cosmosdb;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -201,22 +203,57 @@ public final class CosmosDBChatMemoryRepository implements ChatMemoryRepository 
 		}
 		doc.put("messageTimestamp", messageTimestamp.toEpochMilli());
 
-		// Store any additional metadata
-		Map<String, Object> filteredMetadata = message.getMetadata()
-			.entrySet()
-			.stream()
-			.filter(entry -> !CONVERSATION_TS.equals(entry.getKey()))
-			.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+		// Store any additional metadata, unwrapping Optional values and excluding nulls
+		Map<String, Object> filteredMetadata = new HashMap<>();
+		for (Map.Entry<String, Object> entry : message.getMetadata().entrySet()) {
+			if (CONVERSATION_TS.equals(entry.getKey())) {
+				continue;
+			}
+			Object value = entry.getValue();
+			if (value instanceof Optional<?> opt) {
+				value = opt.orElse(null);
+			}
+			if (value != null) {
+				filteredMetadata.put(entry.getKey(), value);
+			}
+		}
 
 		if (!filteredMetadata.isEmpty()) {
 			doc.put("metadata", filteredMetadata);
+		}
+
+		// Store tool calls for assistant messages
+		if (message instanceof AssistantMessage assistantMessage && assistantMessage.hasToolCalls()) {
+			List<Map<String, String>> toolCallDocs = new ArrayList<>();
+			for (AssistantMessage.ToolCall toolCall : assistantMessage.getToolCalls()) {
+				Map<String, String> tc = new HashMap<>();
+				tc.put("id", toolCall.id());
+				tc.put("type", toolCall.type());
+				tc.put("name", toolCall.name());
+				tc.put("arguments", toolCall.arguments());
+				toolCallDocs.add(tc);
+			}
+			doc.put("toolCalls", toolCallDocs);
+		}
+
+		// Store tool responses for tool messages
+		if (message instanceof ToolResponseMessage toolResponseMessage) {
+			List<Map<String, String>> responseDocs = new ArrayList<>();
+			for (ToolResponseMessage.ToolResponse response : toolResponseMessage.getResponses()) {
+				Map<String, String> tr = new HashMap<>();
+				tr.put("id", response.id());
+				tr.put("name", response.name());
+				tr.put("responseData", response.responseData());
+				responseDocs.add(tr);
+			}
+			doc.put("toolResponses", responseDocs);
 		}
 
 		return doc;
 	}
 
 	private Message mapToMessage(Map<String, Object> doc) {
-		String content = (String) Objects.requireNonNull(doc.get("content"));
+		String content = (String) doc.get("content");
 		String messageTypeStr = (String) Objects.requireNonNull(doc.get("messageType"));
 		MessageType messageType = MessageType.valueOf(messageTypeStr);
 
@@ -235,10 +272,41 @@ public final class CosmosDBChatMemoryRepository implements ChatMemoryRepository 
 		}
 
 		return switch (messageType) {
-			case ASSISTANT -> AssistantMessage.builder().content(content).properties(metadata).build();
+			case ASSISTANT -> {
+				var builder = AssistantMessage.builder()
+					.content(content != null ? content : "")
+					.properties(metadata);
+				// Reconstruct tool calls if present
+				@SuppressWarnings("unchecked")
+				List<Map<String, String>> toolCallDocs = (List<Map<String, String>>) doc.get("toolCalls");
+				if (toolCallDocs != null && !toolCallDocs.isEmpty()) {
+					List<AssistantMessage.ToolCall> toolCalls = toolCallDocs.stream()
+						.map(tc -> new AssistantMessage.ToolCall(
+								tc.get("id"), tc.get("type"), tc.get("name"), tc.get("arguments")))
+						.collect(Collectors.toList());
+					builder.toolCalls(toolCalls);
+				}
+				yield builder.build();
+			}
 			case USER -> UserMessage.builder().text(content).metadata(metadata).build();
 			case SYSTEM -> SystemMessage.builder().text(content).metadata(metadata).build();
-			case TOOL -> ToolResponseMessage.builder().responses(List.of()).metadata(metadata).build();
+			case TOOL -> {
+				var builder = ToolResponseMessage.builder().metadata(metadata);
+				// Reconstruct tool responses if present
+				@SuppressWarnings("unchecked")
+				List<Map<String, String>> responseDocs = (List<Map<String, String>>) doc.get("toolResponses");
+				if (responseDocs != null && !responseDocs.isEmpty()) {
+					List<ToolResponseMessage.ToolResponse> responses = responseDocs.stream()
+						.map(tr -> new ToolResponseMessage.ToolResponse(
+								tr.get("id"), tr.get("name"), tr.get("responseData")))
+						.collect(Collectors.toList());
+					builder.responses(responses);
+				}
+				else {
+					builder.responses(List.of());
+				}
+				yield builder.build();
+			}
 			default -> throw new IllegalStateException(String.format("Unknown message type: %s", messageTypeStr));
 		};
 	}

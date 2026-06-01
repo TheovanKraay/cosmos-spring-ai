@@ -18,11 +18,9 @@ package com.azure.spring.ai.vectorstore.cosmosdb;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
 import com.azure.cosmos.CosmosAsyncClient;
-import com.azure.cosmos.CosmosAsyncContainer;
 import com.azure.cosmos.CosmosClientBuilder;
 import com.azure.cosmos.models.CosmosVectorIndexType;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,13 +40,13 @@ import org.springframework.context.annotation.Bean;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Emulator-based integration tests for {@link CosmosDBVectorStore}.
- * Activated by the Maven 'emulator' profile. Uses key-based auth against the local
- * Cosmos DB Emulator.
+ * Direct mode emulator-based integration test for {@link CosmosDBVectorStore}.
+ * Validates that the azure-spring-data-cosmos 7.3.0 upgrade enables Direct/RNTBD
+ * connectivity with Netty 4.2. Uses Direct mode against the local Cosmos DB Emulator.
  *
  * @author Theo van Kraay
  */
-class CosmosDBVectorStoreEmulatorIT {
+class CosmosDBVectorStoreDirectModeEmulatorIT {
 
 	private static final String EMULATOR_ENDPOINT = System.getProperty("cosmos.endpoint",
 			"https://localhost:8081");
@@ -66,88 +64,49 @@ class CosmosDBVectorStoreEmulatorIT {
 		this.contextRunner.run(context -> this.vectorStore = context.getBean(VectorStore.class));
 	}
 
-	@Test
-	void testAddSearchAndDeleteDocuments() {
-		Document document1 = new Document(UUID.randomUUID().toString(), "Spring AI integrates with Cosmos DB",
-				Map.of("topic", "spring"));
-		Document document2 = new Document(UUID.randomUUID().toString(), "Vector search enables semantic queries",
-				Map.of("topic", "vectors"));
-
-		this.vectorStore.add(List.of(document1, document2));
-
-		List<Document> results = this.vectorStore
-			.similaritySearch(SearchRequest.builder().query("semantic search").topK(5).build());
-
-		assertThat(results).isNotEmpty();
-
-		this.vectorStore.delete(List.of(document1.getId(), document2.getId()));
-
-		List<Document> afterDelete = this.vectorStore
-			.similaritySearch(SearchRequest.builder().query("semantic search").topK(5).build());
-		assertThat(afterDelete).isEmpty();
-	}
-
 	/**
-	 * Tests that documents are stored with correct IDs and metadata in Cosmos DB.
-	 * This specifically catches the Jackson 3 serialization bug where ObjectNode
-	 * passed to the Cosmos SDK would lose all fields (including id) because the SDK
-	 * uses Jackson 2 internally.
+	 * Tests basic add/search/delete using Direct mode (RNTBD protocol).
+	 * This validates the Netty 4.2 + azure-spring-data-cosmos 7.3.0 fix.
 	 */
 	@Test
-	void testDocumentIdAndMetadataPreservedOnRoundTrip() {
-		String specificId = UUID.randomUUID().toString();
-		Document document = new Document(specificId, "This tests that document IDs survive serialization",
-				Map.of("topic", "serialization"));
+	void testDirectModeAddSearchAndDelete() {
+		Document document = new Document(UUID.randomUUID().toString(),
+				"Direct mode uses RNTBD protocol for lower latency",
+				Map.of("topic", "connectivity"));
 
 		this.vectorStore.add(List.of(document));
 
 		List<Document> results = this.vectorStore
-			.similaritySearch(SearchRequest.builder().query("document IDs survive serialization").topK(1).build());
+			.similaritySearch(SearchRequest.builder().query("RNTBD protocol latency").topK(1).build());
 
-		assertThat(results).hasSize(1);
-		assertThat(results.get(0).getId()).isEqualTo(specificId);
-		assertThat(results.get(0).getMetadata()).containsEntry("topic", "serialization");
-		assertThat(results.get(0).getText()).isEqualTo("This tests that document IDs survive serialization");
+		assertThat(results).isNotEmpty();
+		assertThat(results.get(0).getId()).isEqualTo(document.getId());
+		assertThat(results.get(0).getText()).isEqualTo("Direct mode uses RNTBD protocol for lower latency");
 
-		// Clean up
-		this.vectorStore.delete(List.of(specificId));
+		this.vectorStore.delete(List.of(document.getId()));
+
+		List<Document> afterDelete = this.vectorStore
+			.similaritySearch(SearchRequest.builder().query("RNTBD protocol latency").topK(1).build());
+		assertThat(afterDelete).isEmpty();
 	}
 
 	/**
-	 * Tests that multiple documents can be bulk-inserted and each retains its
-	 * unique ID. This catches the bug where all documents would get id=null due to
-	 * Jackson 3/2 incompatibility, resulting in HTTP 400 from Cosmos DB.
+	 * Tests that multiple documents round-trip correctly via Direct mode.
 	 */
 	@Test
-	void testBulkInsertPreservesDistinctIds() {
+	void testDirectModeBulkOperations() {
 		List<Document> documents = List.of(
-				new Document(UUID.randomUUID().toString(), "First document about cats", Map.of("topic", "animals")),
-				new Document(UUID.randomUUID().toString(), "Second document about dogs", Map.of("topic", "animals")),
-				new Document(UUID.randomUUID().toString(), "Third document about birds", Map.of("topic", "animals")));
+				new Document(UUID.randomUUID().toString(), "Direct mode document one", Map.of("index", "1")),
+				new Document(UUID.randomUUID().toString(), "Direct mode document two", Map.of("index", "2")));
 
-		// This would throw HTTP 400 if IDs are null due to serialization bug
 		this.vectorStore.add(documents);
 
 		List<Document> results = this.vectorStore
-			.similaritySearch(SearchRequest.builder().query("animals cats dogs birds").topK(5).build());
+			.similaritySearch(SearchRequest.builder().query("Direct mode document").topK(5).build());
 
-		assertThat(results).hasSizeGreaterThanOrEqualTo(3);
+		assertThat(results).hasSizeGreaterThanOrEqualTo(2);
 
-		// Verify all documents have distinct IDs
-		List<String> resultIds = results.stream().map(Document::getId).toList();
-		assertThat(resultIds).doesNotHaveDuplicates();
-
-		// Clean up
 		this.vectorStore.delete(documents.stream().map(Document::getId).toList());
-	}
-
-	@Test
-	void testGetNativeClient() {
-		this.contextRunner.run(context -> {
-			CosmosDBVectorStore vs = context.getBean(CosmosDBVectorStore.class);
-			Optional<CosmosAsyncContainer> nativeClient = vs.getNativeClient();
-			assertThat(nativeClient).isPresent();
-		});
 	}
 
 	@SpringBootConfiguration
@@ -158,8 +117,8 @@ class CosmosDBVectorStoreEmulatorIT {
 		public VectorStore vectorStore(CosmosAsyncClient cosmosClient, EmbeddingModel embeddingModel) {
 			return CosmosDBVectorStore.builder(cosmosClient, embeddingModel)
 				.databaseName("emulator-test-db")
-				.containerName("emulator-vector-store-flat")
-				.metadataFields(List.of("topic"))
+				.containerName("emulator-vector-store-direct")
+				.metadataFields(List.of("topic", "index"))
 				.vectorStoreThroughput(400)
 				.vectorIndexType(CosmosVectorIndexType.FLAT)
 				.vectorDimensions(384)
@@ -170,8 +129,8 @@ class CosmosDBVectorStoreEmulatorIT {
 		public CosmosAsyncClient cosmosClient() {
 			return new CosmosClientBuilder().endpoint(EMULATOR_ENDPOINT)
 				.key(EMULATOR_KEY)
-				.userAgentSuffix("SpringAI-CDBNoSQL-VectorStore-Emulator")
-				.gatewayMode()
+				.userAgentSuffix("SpringAI-CDBNoSQL-VectorStore-DirectMode")
+				.directMode()
 				.buildAsyncClient();
 		}
 

@@ -42,7 +42,7 @@
 
         <spring-ai.version>2.0.0-M7</spring-ai.version>
         <spring-boot.version>4.1.0-RC1</spring-boot.version>
-        <azure-cosmos.version>5.22.0</azure-cosmos.version>
+        <azure-spring-data-cosmos.version>7.3.0</azure-spring-data-cosmos.version>
         <azure-identity.version>1.18.2</azure-identity.version>
 
         <flatten-maven-plugin.version>1.5.0</flatten-maven-plugin.version>
@@ -71,7 +71,7 @@
         <dependency>
             <groupId>com.azure</groupId>
             <artifactId>azure-spring-data-cosmos</artifactId>
-            <version>${azure-cosmos.version}</version>
+            <version>${azure-spring-data-cosmos.version}</version>
         </dependency>
         <dependency>
             <groupId>com.azure</groupId>

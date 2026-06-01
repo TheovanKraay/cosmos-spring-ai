@@ -53,6 +53,8 @@ public class CosmosDBVectorStoreProperties extends CommonVectorStoreProperties {
 
 	private @Nullable String connectionMode;
 
+	private @Nullable String vectorIndexType;
+
 	public int getVectorStoreThroughput() {
 		return this.vectorStoreThroughput;
 	}
@@ -129,6 +131,14 @@ public class CosmosDBVectorStoreProperties extends CommonVectorStoreProperties {
 
 	public void setVectorDimensions(long vectorDimensions) {
 		this.vectorDimensions = vectorDimensions;
+	}
+
+	public @Nullable String getVectorIndexType() {
+		return this.vectorIndexType;
+	}
+
+	public void setVectorIndexType(@Nullable String vectorIndexType) {
+		this.vectorIndexType = vectorIndexType;
 	}
 
 }

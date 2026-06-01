@@ -253,7 +253,7 @@ public final class CosmosDBChatMemoryRepository implements ChatMemoryRepository 
 	}
 
 	private Message mapToMessage(Map<String, Object> doc) {
-		String content = (String) Objects.requireNonNull(doc.get("content"), "Document missing 'content' field");
+		String content = (String) doc.get("content");
 		String messageTypeStr = (String) Objects.requireNonNull(doc.get("messageType"));
 		MessageType messageType = MessageType.valueOf(messageTypeStr);
 

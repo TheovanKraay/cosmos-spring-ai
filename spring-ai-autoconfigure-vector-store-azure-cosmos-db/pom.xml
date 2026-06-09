@@ -40,7 +40,7 @@
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <spring-ai.version>2.0.0-M7</spring-ai.version>
+        <spring-ai.version>2.0.0-RC1</spring-ai.version>
         <spring-boot.version>4.1.0-RC1</spring-boot.version>
         <azure-spring-data-cosmos.version>7.3.0</azure-spring-data-cosmos.version>
         <azure-identity.version>1.18.2</azure-identity.version>
@@ -251,6 +251,7 @@
                             <includes>
                                 <include>**/*EmulatorIT.java</include>
                             </includes>
+                            <excludes combine.self="override"/>
                         </configuration>
                     </plugin>
                 </plugins>

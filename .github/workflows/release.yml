@@ -23,10 +23,10 @@ on:
       - 'spring-ai-model-chat-memory-repository-cosmos-db-v[0-9]*.[0-9]*.[0-9]*-M[0-9]*'
       - 'spring-ai-autoconfigure-model-chat-memory-repository-cosmos-db-v[0-9]*.[0-9]*.[0-9]*-M[0-9]*'
       # Release Candidate: <module>-vMAJOR.MINOR.PATCH-RCN  (Spring convention, no dot)
-      - 'spring-ai-azure-cosmos-db-store-v[0-9]*.[0-9]*.[0-9]*-RC[0-9][0-9]*'
-      - 'spring-ai-autoconfigure-vector-store-azure-cosmos-db-v[0-9]*.[0-9]*.[0-9]*-RC[0-9][0-9]*'
-      - 'spring-ai-model-chat-memory-repository-cosmos-db-v[0-9]*.[0-9]*.[0-9]*-RC[0-9][0-9]*'
-      - 'spring-ai-autoconfigure-model-chat-memory-repository-cosmos-db-v[0-9]*.[0-9]*.[0-9]*-RC[0-9][0-9]*'
+      - 'spring-ai-azure-cosmos-db-store-v[0-9]*.[0-9]*.[0-9]*-RC[0-9]'
+      - 'spring-ai-autoconfigure-vector-store-azure-cosmos-db-v[0-9]*.[0-9]*.[0-9]*-RC[0-9]'
+      - 'spring-ai-model-chat-memory-repository-cosmos-db-v[0-9]*.[0-9]*.[0-9]*-RC[0-9]'
+      - 'spring-ai-autoconfigure-model-chat-memory-repository-cosmos-db-v[0-9]*.[0-9]*.[0-9]*-RC[0-9]'
   workflow_dispatch:
     inputs:
       tag:

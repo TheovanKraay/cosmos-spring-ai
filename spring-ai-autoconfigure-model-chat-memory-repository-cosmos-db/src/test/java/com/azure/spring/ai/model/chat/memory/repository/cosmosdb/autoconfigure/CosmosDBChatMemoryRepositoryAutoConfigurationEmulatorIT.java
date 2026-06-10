@@ -112,13 +112,14 @@ class CosmosDBChatMemoryRepositoryAutoConfigurationEmulatorIT {
 	void customProperties() {
 		this.contextRunner
 			.withPropertyValues(
-					"spring.ai.chat.memory.repository.cosmosdb.partition-key-path=/customPartitionKey")
+					"spring.ai.chat.memory.repository.cosmosdb.partition-key-path=/customPartitionKey",
+					"spring.ai.chat.memory.repository.cosmosdb.container-name=emulator-autoconfig-custom-pk")
 			.run(context -> {
 				CosmosDBChatMemoryRepositoryProperties properties = context
 					.getBean(CosmosDBChatMemoryRepositoryProperties.class);
 				assertThat(properties.getEndpoint()).isEqualTo(EMULATOR_ENDPOINT);
 				assertThat(properties.getDatabaseName()).isEqualTo("emulator-autoconfig-db");
-				assertThat(properties.getContainerName()).isEqualTo("emulator-autoconfig-chat-memory");
+				assertThat(properties.getContainerName()).isEqualTo("emulator-autoconfig-custom-pk");
 				assertThat(properties.getPartitionKeyPath()).isEqualTo("/customPartitionKey");
 			});
 	}

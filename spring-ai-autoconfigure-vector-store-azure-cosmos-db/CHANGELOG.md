@@ -31,10 +31,22 @@ their own changelogs.
 
 ## [1.0.0-RC1] — 2026-06-10
 
+### Added
+
+- `spring.ai.vectorstore.cosmosdb.vectorIndexType` configuration property to
+  select the Cosmos vector index type (`FLAT`, `QUANTIZED_FLAT`, `DISK_ANN`)
+  without replacing the auto-configured `CosmosDBVectorStore` bean. Default
+  remains `DISK_ANN`.
+
 ### Changed
 
-- Upgrade to Spring AI `2.0.0-RC1`
-- Upgrade `azure-spring-data-cosmos` to `7.3.0`
+- Upgrade Spring AI to `2.0.0-RC1` (from `2.0.0-M7`).
+
+### Removed
+
+- Unused `<azure-spring-data-cosmos.version>` Maven property. This module has
+  no direct dependency on `azure-spring-data-cosmos`; the version is governed
+  by the underlying `spring-ai-azure-cosmos-db-store` module.
 
 ## [1.0.0-M1] — 2026-05-26
 

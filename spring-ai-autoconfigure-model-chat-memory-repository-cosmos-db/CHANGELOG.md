@@ -34,8 +34,10 @@ changelogs.
 
 ### Changed
 
-- Upgrade to Spring AI `2.0.0-RC1`
-- Upgrade `azure-spring-data-cosmos` to `7.3.0`
+- Upgrade Spring AI to `2.0.0-RC1` (from `2.0.0-M7`).
+- Upgrade `azure-spring-data-cosmos` to `7.3.0` (from `5.22.0`), which brings
+  an `azure-cosmos` SDK compatible with Netty 4.2 SSL handling. This restores
+  Direct (RNTBD) mode connectivity under Spring Boot 4.x.
 
 ## [1.0.0-M1] — 2026-05-26
 

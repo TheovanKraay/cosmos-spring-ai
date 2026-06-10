@@ -37,10 +37,6 @@ changelogs.
 - Upgrade to Spring AI `2.0.0-RC1`
 - Upgrade `azure-spring-data-cosmos` to `7.3.0`
 
-### Fixed
-
-- Fix partition key mismatch in autoconfigure emulator test
-
 ## [1.0.0-M1] — 2026-05-26
 
 ### Added

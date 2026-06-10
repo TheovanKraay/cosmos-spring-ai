@@ -11,9 +11,8 @@ This changelog covers **only this autoconfigure module**. Sibling modules
 `spring-ai-autoconfigure-model-chat-memory-repository-cosmos-db`) maintain
 their own changelogs.
 
-> This module depends on `spring-ai-azure-cosmos-db-store`. Each release
-> should record which `store` version it pins (the
-> `<spring-ai-cosmos-db-store.version>` property in this module's `pom.xml`).
+> This module depends on `spring-ai-azure-cosmos-db-store` via the
+> `<spring-ai-cosmos-db-store.version>` property in this module's `pom.xml`.
 
 ## [Unreleased]
 

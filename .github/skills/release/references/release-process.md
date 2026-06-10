@@ -121,9 +121,10 @@ Follows [Semantic Versioning](https://semver.org/):
 - **Patch** (`0.0.Z`) — bug fixes, backward compatible
 - **Beta** (`X.Y.Z-beta.N`) — pre-release, may have breaking changes
 - **Milestone** (`X.Y.Z-MN`) — pre-release following Spring convention (no dot before N)
+- **Release Candidate** (`X.Y.Z-RCN`) — pre-release following Spring convention (no dot before N)
 
-Release-candidate versions (`-rc.N`) are **not supported** by the workflow's
-tag regex. Use `-beta.N` or `-MN` for any pre-release.
+The legacy SemVer release-candidate spelling (`-rc.N`) is **not supported** by
+the workflow's tag regex. Use `-RCN` (Spring convention), `-beta.N`, or `-MN`.
 
 ## Tag grammar (authoritative)
 
@@ -131,6 +132,7 @@ tag regex. Use `-beta.N` or `-MN` for any pre-release.
 <module>-v<MAJOR>.<MINOR>.<PATCH>             # stable
 <module>-v<MAJOR>.<MINOR>.<PATCH>-beta.<N>    # beta
 <module>-v<MAJOR>.<MINOR>.<PATCH>-M<N>        # milestone (Spring convention)
+<module>-v<MAJOR>.<MINOR>.<PATCH>-RC<N>       # release candidate (Spring convention)
 ```
 
 Where `<module>` is exactly one of:

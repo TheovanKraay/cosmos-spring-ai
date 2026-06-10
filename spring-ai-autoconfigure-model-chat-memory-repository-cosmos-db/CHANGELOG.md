@@ -11,10 +11,9 @@ This changelog covers **only the autoconfigure module**. Sibling modules
 `spring-ai-model-chat-memory-repository-cosmos-db`) maintain their own
 changelogs.
 
-> This module depends on `spring-ai-model-chat-memory-repository-cosmos-db`.
-> Each release should record which `chat-memory` version it pins (the
-> `<spring-ai-cosmos-chat-memory.version>` property in this module's
-> `pom.xml`).
+> This module depends on `spring-ai-model-chat-memory-repository-cosmos-db`
+> via the `<spring-ai-cosmos-chat-memory.version>` property in this module's
+> `pom.xml`.
 
 ## [Unreleased]
 

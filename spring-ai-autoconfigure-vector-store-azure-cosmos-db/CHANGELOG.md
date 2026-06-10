@@ -11,9 +11,8 @@ This changelog covers **only this autoconfigure module**. Sibling modules
 `spring-ai-autoconfigure-model-chat-memory-repository-cosmos-db`) maintain
 their own changelogs.
 
-> This module depends on `spring-ai-azure-cosmos-db-store`. Each release
-> should record which `store` version it pins (the
-> `<spring-ai-cosmos-db-store.version>` property in this module's `pom.xml`).
+> This module depends on `spring-ai-azure-cosmos-db-store` via the
+> `<spring-ai-cosmos-db-store.version>` property in this module's `pom.xml`.
 
 ## [Unreleased]
 
@@ -28,6 +27,25 @@ their own changelogs.
 ### Fixed
 
 ### Security
+
+## [1.0.0-RC1] — 2026-06-10
+
+### Added
+
+- `spring.ai.vectorstore.cosmosdb.vectorIndexType` configuration property to
+  select the Cosmos vector index type (`FLAT`, `QUANTIZED_FLAT`, `DISK_ANN`)
+  without replacing the auto-configured `CosmosDBVectorStore` bean. Default
+  remains `DISK_ANN`.
+
+### Changed
+
+- Upgrade Spring AI to `2.0.0-RC1` (from `2.0.0-M7`).
+
+### Removed
+
+- Unused `<azure-spring-data-cosmos.version>` Maven property. This module has
+  no direct dependency on `azure-spring-data-cosmos`; the version is governed
+  by the underlying `spring-ai-azure-cosmos-db-store` module.
 
 ## [1.0.0-M1] — 2026-05-26
 

@@ -11,10 +11,9 @@ This changelog covers **only the autoconfigure module**. Sibling modules
 `spring-ai-model-chat-memory-repository-cosmos-db`) maintain their own
 changelogs.
 
-> This module depends on `spring-ai-model-chat-memory-repository-cosmos-db`.
-> Each release should record which `chat-memory` version it pins (the
-> `<spring-ai-cosmos-chat-memory.version>` property in this module's
-> `pom.xml`).
+> This module depends on `spring-ai-model-chat-memory-repository-cosmos-db`
+> via the `<spring-ai-cosmos-chat-memory.version>` property in this module's
+> `pom.xml`.
 
 ## [Unreleased]
 
@@ -29,6 +28,15 @@ changelogs.
 ### Fixed
 
 ### Security
+
+## [1.0.0-RC1] — 2026-06-10
+
+### Changed
+
+- Upgrade Spring AI to `2.0.0-RC1` (from `2.0.0-M7`).
+- Upgrade `azure-spring-data-cosmos` to `7.3.0` (from `5.22.0`), which brings
+  an `azure-cosmos` SDK compatible with Netty 4.2 SSL handling. This restores
+  Direct (RNTBD) mode connectivity under Spring Boot 4.x.
 
 ## [1.0.0-M1] — 2026-05-26
 

@@ -25,6 +25,27 @@ their own changelogs.
 
 ### Security
 
+## [1.0.0-RC1] — 2026-06-10
+
+### Changed
+
+- Upgrade Spring AI to `2.0.0-RC1` (from `2.0.0-M7`).
+- Upgrade `azure-spring-data-cosmos` to `7.3.0` (from `5.22.0`), which brings
+  an `azure-cosmos` SDK compatible with Netty 4.2 SSL handling. This restores
+  Direct (RNTBD) mode connectivity under Spring Boot 4.x.
+
+### Fixed
+
+- `CosmosDBChatMemoryRepository.createMessageDocument` no longer throws
+  `NullPointerException` when message metadata contains `Optional.empty()`
+  values. Metadata entries that unwrap to `null` are now skipped instead of
+  being passed to `Collectors.toMap`, which rejects null values.
+- Tool messages now round-trip correctly. `AssistantMessage.toolCalls` and
+  `ToolResponseMessage` payloads are persisted and reconstructed on read, so
+  multi-turn tool-call conversations retain their state across reloads. Prior
+  to this fix only the text `content` was stored, causing agents using
+  tool-calling patterns to lose context.
+
 ## [1.0.0-M1] — 2026-05-26
 
 ### Added

@@ -121,9 +121,10 @@ Follows [Semantic Versioning](https://semver.org/):
 - **Patch** (`0.0.Z`) — bug fixes, backward compatible
 - **Beta** (`X.Y.Z-beta.N`) — pre-release, may have breaking changes
 - **Milestone** (`X.Y.Z-MN`) — pre-release following Spring convention (no dot before N)
+- **Release Candidate** (`X.Y.Z-RCN`) — pre-release following Spring convention (no dot before N)
 
-Release-candidate versions (`-rc.N`) are **not supported** by the workflow's
-tag regex. Use `-beta.N` or `-MN` for any pre-release.
+The legacy SemVer release-candidate spelling (`-rc.N`) is **not supported** by
+the workflow's tag regex. Use `-RCN` (Spring convention), `-beta.N`, or `-MN`.
 
 ## Tag grammar (authoritative)
 
@@ -131,6 +132,7 @@ tag regex. Use `-beta.N` or `-MN` for any pre-release.
 <module>-v<MAJOR>.<MINOR>.<PATCH>             # stable
 <module>-v<MAJOR>.<MINOR>.<PATCH>-beta.<N>    # beta
 <module>-v<MAJOR>.<MINOR>.<PATCH>-M<N>        # milestone (Spring convention)
+<module>-v<MAJOR>.<MINOR>.<PATCH>-RC<N>       # release candidate (Spring convention)
 ```
 
 Where `<module>` is exactly one of:
@@ -142,7 +144,7 @@ Where `<module>` is exactly one of:
 
 The workflow uses an explicit per-module allowlist (not a wildcard); any
 tag outside this grammar is silently ignored. The `parse-tag` job validates
-the version regex `^[0-9]+\.[0-9]+\.[0-9]+(-beta\.[0-9]+|-M[0-9]+)?$`.
+the version regex `^[0-9]+\.[0-9]+\.[0-9]+(-beta\.[0-9]+|-M[0-9]+|-RC[0-9]+)?$`.
 
 ## Why no parent POM and no root `<module-name>.version` properties?
 

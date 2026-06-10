@@ -108,7 +108,7 @@ check_origin_url() {
     fi
 }
 
-SEMVER_REGEX='^[0-9]+\.[0-9]+\.[0-9]+(-beta\.[0-9]+|-M[0-9]+)?$'
+SEMVER_REGEX='^[0-9]+\.[0-9]+\.[0-9]+(-beta\.[0-9]+|-M[0-9]+|-RC[0-9]+)?$'
 TAG="${MODULE}-v${VERSION}"
 POM="$REPO_ROOT/$MODULE/pom.xml"
 CHANGELOG="$REPO_ROOT/$MODULE/CHANGELOG.md"
@@ -125,9 +125,9 @@ else
 fi
 
 if [[ "$VERSION" =~ $SEMVER_REGEX ]]; then
-    pass "Version '$VERSION' follows X.Y.Z[-beta.N | -MN]"
+    pass "Version '$VERSION' follows X.Y.Z[-beta.N | -MN | -RCN]"
 else
-    fail "Version '$VERSION' does not match X.Y.Z[-beta.N | -MN]"
+    fail "Version '$VERSION' does not match X.Y.Z[-beta.N | -MN | -RCN]"
 fi
 
 # Tag must not exist (preflight + tag); for prepare it's still useful info.
@@ -269,7 +269,7 @@ case "$PHASE" in
             elif [[ "$CORE_DEP" == *"-SNAPSHOT" ]]; then
                 fail "Autoconfigure pins $AUTOCONF_CORE at SNAPSHOT ($CORE_DEP). Bump <$AUTOCONF_PROP> to a released version of $AUTOCONF_CORE before tagging."
             elif [[ ! "$CORE_DEP" =~ $SEMVER_REGEX ]]; then
-                fail "<$AUTOCONF_PROP> ($CORE_DEP) is not a valid release version (X.Y.Z[-beta.N | -MN])"
+                fail "<$AUTOCONF_PROP> ($CORE_DEP) is not a valid release version (X.Y.Z[-beta.N | -MN | -RCN])"
             else
                 pass "Autoconfigure pins $AUTOCONF_CORE at released version $CORE_DEP"
             fi

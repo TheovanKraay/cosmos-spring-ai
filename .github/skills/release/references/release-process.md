@@ -142,7 +142,7 @@ Where `<module>` is exactly one of:
 
 The workflow uses an explicit per-module allowlist (not a wildcard); any
 tag outside this grammar is silently ignored. The `parse-tag` job validates
-the version regex `^[0-9]+\.[0-9]+\.[0-9]+(-beta\.[0-9]+|-M[0-9]+)?$`.
+the version regex `^[0-9]+\.[0-9]+\.[0-9]+(-beta\.[0-9]+|-M[0-9]+|-RC[0-9]+)?$`.
 
 ## Why no parent POM and no root `<module-name>.version` properties?
 

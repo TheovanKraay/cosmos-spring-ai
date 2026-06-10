@@ -30,6 +30,17 @@ changelogs.
 
 ### Security
 
+## [1.0.0-RC1] — 2026-06-10
+
+### Changed
+
+- Upgrade to Spring AI `2.0.0-RC1` and fix emulator profile
+- Pin `spring-ai-model-chat-memory-repository-cosmos-db` at `1.0.0-RC1` (`<spring-ai-cosmos-chat-memory.version>`)
+
+### Fixed
+
+- Fix partition key mismatch in autoconfigure emulator test
+
 ## [1.0.0-M1] — 2026-05-26
 
 ### Added

@@ -120,12 +120,16 @@ Push <module>-v<version> tag (or <module>-v<version>-beta.N)
 ```
 <module>-v<MAJOR>.<MINOR>.<PATCH>             # stable
 <module>-v<MAJOR>.<MINOR>.<PATCH>-beta.<N>    # beta
+<module>-v<MAJOR>.<MINOR>.<PATCH>-M<N>        # milestone (Spring convention, no dot)
+<module>-v<MAJOR>.<MINOR>.<PATCH>-RC<N>       # release candidate (Spring convention, no dot)
 ```
 
 | Pattern | Example |
 |---|---|
 | Stable | `spring-ai-azure-cosmos-db-store-v1.0.0` |
 | Beta | `spring-ai-autoconfigure-vector-store-azure-cosmos-db-v1.0.0-beta.1` |
+| Milestone | `spring-ai-azure-cosmos-db-store-v1.0.0-M1` |
+| Release candidate | `spring-ai-azure-cosmos-db-store-v1.0.0-RC1` |
 
 Valid module names in tags:
 
@@ -137,8 +141,8 @@ Valid module names in tags:
 Tags that do **not** match (and will be silently ignored):
 
 - `v1.0.0` — missing module prefix
-- `spring-ai-azure-cosmos-db-store-v1.0.0-rc1` — release candidates not
-  supported (use `-beta.N`)
+- `spring-ai-azure-cosmos-db-store-v1.0.0-rc.1` — lowercase / dotted RC
+  form not supported (use `-RC<N>`, Spring convention)
 - Any module name not in the allowlist above
 
 ## The interactive way (recommended): use the release agent
@@ -324,8 +328,8 @@ Follows [Semantic Versioning](https://semver.org/):
 - **Minor** (`0.Y.0`) — new features, backward compatible
 - **Patch** (`0.0.Z`) — bug fixes, backward compatible
 - **Beta** (`X.Y.Z-beta.N`) — pre-release, may have breaking changes
-
-Release-candidate versions (`-rc.N`) are **not supported** by the workflow.
+- **Milestone** (`X.Y.Z-M<N>`) — Spring-convention pre-release milestone
+- **Release candidate** (`X.Y.Z-RC<N>`) — Spring-convention release candidate
 
 ## Example: full multi-module release sequence
 

@@ -35,7 +35,6 @@ their own changelogs.
 
 - Upgrade to Spring AI `2.0.0-RC1`
 - Upgrade `azure-spring-data-cosmos` to `7.3.0`
-- Pin `spring-ai-azure-cosmos-db-store` at `1.0.0-RC1` (`<spring-ai-cosmos-db-store.version>`)
 
 ### Fixed
 

@@ -31,14 +31,10 @@ their own changelogs.
 
 ## [1.0.0-RC1] — 2026-06-10
 
-### Added
-
-- Add `vectorIndexType` property to auto-config and Direct mode test coverage
-
 ### Changed
 
-- Upgrade to Spring AI `2.0.0-RC1` and fix emulator profile
-- Rename inter-module property to `azure-spring-data-cosmos.version`
+- Upgrade to Spring AI `2.0.0-RC1`
+- Upgrade `azure-spring-data-cosmos` to `7.3.0`
 - Pin `spring-ai-azure-cosmos-db-store` at `1.0.0-RC1` (`<spring-ai-cosmos-db-store.version>`)
 
 ### Fixed

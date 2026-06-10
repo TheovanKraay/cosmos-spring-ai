@@ -31,11 +31,6 @@ their own changelogs.
 - Upgrade to Spring AI `2.0.0-RC1`
 - Upgrade `azure-spring-data-cosmos` to `7.3.0`
 
-### Fixed
-
-- Fix Jackson 3/2 incompatibility in document serialization
-- Fix chat memory tool message round-trip
-
 ## [1.0.0-M1] — 2026-05-26
 
 ### Added

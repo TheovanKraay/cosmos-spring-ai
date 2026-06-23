@@ -44,7 +44,6 @@
         <spring-boot.version>4.1.0</spring-boot.version>
         <azure-identity.version>1.18.2</azure-identity.version>
         <jspecify.version>1.0.0</jspecify.version>
-        <spring-ai-cosmos-db-store.version>1.0.0-SNAPSHOT</spring-ai-cosmos-db-store.version>
 
         <flatten-maven-plugin.version>1.5.0</flatten-maven-plugin.version>
     </properties>
@@ -72,7 +71,7 @@
         <dependency>
             <groupId>com.azure.spring.ai</groupId>
             <artifactId>spring-ai-azure-cosmos-db-store</artifactId>
-            <version>${spring-ai-cosmos-db-store.version}</version>
+            <version>${project.version}</version>
             <optional>true</optional>
         </dependency>
         <dependency>

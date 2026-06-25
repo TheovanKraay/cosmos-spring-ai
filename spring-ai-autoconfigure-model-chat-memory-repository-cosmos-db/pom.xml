@@ -22,7 +22,7 @@
 
     <groupId>com.azure.spring.ai</groupId>
     <artifactId>spring-ai-autoconfigure-model-chat-memory-repository-cosmos-db</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
     <name>Spring AI Auto Configuration - Chat Memory Repository - CosmosDB</name>
     <description>Spring AI Auto Configuration for CosmosDB Chat Memory Repository</description>
     <url>https://github.com/AzureCosmosDB/spring-ai</url>

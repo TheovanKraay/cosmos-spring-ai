@@ -25,6 +25,12 @@ their own changelogs.
 
 ### Security
 
+## [1.0.0] — 2026-06-25
+
+### Changed
+
+- Upgraded Spring AI to 2.0.0 (GA) and Spring Boot to 4.1.0 (GA).
+
 ## [1.0.0-RC1] — 2026-06-10
 
 ### Changed

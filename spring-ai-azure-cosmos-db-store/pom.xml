@@ -6,7 +6,7 @@
 
     <groupId>com.azure.spring.ai</groupId>
     <artifactId>spring-ai-azure-cosmos-db-store</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
     <packaging>jar</packaging>
 
     <name>Spring AI Vector Store - Azure Cosmos DB</name>

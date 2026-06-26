@@ -28,7 +28,7 @@ The easiest way to use the Cosmos DB vector store is with Spring Boot auto-confi
 <dependency>
     <groupId>com.azure.spring.ai</groupId>
     <artifactId>spring-ai-autoconfigure-vector-store-azure-cosmos-db</artifactId>
-    <version>1.0.0-RC1</version>
+    <version>1.0.0</version>
 </dependency>
 ```
 
@@ -102,7 +102,7 @@ public class DemoApplication implements CommandLineRunner {
 <dependency>
     <groupId>com.azure.spring.ai</groupId>
     <artifactId>spring-ai-azure-cosmos-db-store</artifactId>
-    <version>1.0.0-RC1</version>
+    <version>1.0.0</version>
 </dependency>
 ```
 

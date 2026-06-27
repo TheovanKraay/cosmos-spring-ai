@@ -47,7 +47,7 @@ Community-maintained Spring AI integrations for Azure Cosmos DB.
 
 ## Prerequisites
 
-- Java 17+
+- Java 21+
 - Spring Boot 4.1+
 - Spring AI 2.0+
 - An Azure Cosmos DB account (or the [Cosmos DB Emulator](https://learn.microsoft.com/en-us/azure/cosmos-db/emulator) for local development)
